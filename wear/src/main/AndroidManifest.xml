@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-feature android:name="android.hardware.type.watch" />
+
+    <!-- Samsung Health Sensor SDK reads body sensors on the watch.
+         Wear OS 6 / API 36+ replaced BODY_SENSORS with the health.* runtime permissions;
+         keep BODY_SENSORS for API <=35 and add the modern permissions for 36+. -->
+    <uses-permission
+        android:name="android.permission.BODY_SENSORS"
+        android:maxSdkVersion="35" />
+    <!-- Required (API 31+) for the Samsung SDK to keep delivering sensor data while the app is
+         backgrounded / screen off. Without it the SDK stops firing once Doze begins (verified). -->
+    <uses-permission android:name="android.permission.BODY_SENSORS_BACKGROUND" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!-- Heart rate (HEART_RATE_CONTINUOUS) on API 36+ -->
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <!-- EDA raw sensor (Samsung-specific) -->
+    <uses-permission android:name="com.samsung.android.hardware.sensormanager.permission.READ_ADDITIONAL_HEALTH_DATA" />
+
+    <!-- Foreground service (type health) required on API 34+ to keep tracking with screen off -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Lets the phone remotely START the foreground health service (begin tracking) from the
+         Data-Layer command listener, which runs in the background. Receiving a Data Layer message is
+         NOT itself an FGS-from-background exemption (API 31+), so this Companion exemption is required
+         or remote START throws ForegroundServiceStartNotAllowedException. -->
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_START_FOREGROUND_SERVICES_FROM_BACKGROUND" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.DeviceDefault">
+
+        <uses-library
+            android:name="com.google.android.wearable"
+            android:required="true" />
+
+        <!-- Standalone Wear app declaration (no required phone companion to launch) -->
+        <meta-data
+            android:name="com.google.android.wearable.standalone"
+            android:value="true" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Owns the Samsung Health Sensor SDK lifecycle + streams to the tablet -->
+        <service
+            android:name=".WatchSensorService"
+            android:exported="false"
+            android:foregroundServiceType="health" />
+
+        <!-- Receives phone → watch commands (START / FLUSH / STOP / FLUSH_ACK) over the Data Layer.
+             Exported + MESSAGE_RECEIVED filter so the system can deliver (and launch the app if not
+             running) even when the watch app is backgrounded — the mechanism behind remote wake. -->
+        <service
+            android:name=".WatchCommandListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:pathPrefix="/vitalwork/command" />
+            </intent-filter>
+        </service>
+    </application>
+
+</manifest>

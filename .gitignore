@@ -1,0 +1,15 @@
+*.iml
+.gradle
+/local.properties
+/.idea/
+!/.idea/codeStyles/
+/.vscode/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+.claude/settings.local.json
+.ipynb_checkpoints
+/test
