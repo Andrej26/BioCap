@@ -106,7 +106,7 @@ object AppModule {
 
     /**
      * NTP clock used for offset correction (never sets the system clock). [TimeProvider] wraps this;
-     * [com.biocap.app.VitalWorkApplication] kicks off the first sync at startup.
+     * [com.biocap.app.BioCapApplication] kicks off the first sync at startup.
      */
     @Provides
     @Singleton
@@ -124,7 +124,7 @@ object AppModule {
         return Room.databaseBuilder(
             context,
             AppDatabase::class.java,
-            "vitalwork_database"
+            "biocap_database"
         )
             .fallbackToDestructiveMigration()
             .build()

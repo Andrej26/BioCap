@@ -138,7 +138,7 @@ private val TUTORIAL_SLIDES = listOf(
     TutorialSlide(
         type = SlideType.WELCOME,
         phase = SlidePhase.WELCOME,
-        title = "Welcome to VitalWork Operator",
+        title = "Welcome to BioCap Operator",
         body = "This tutorial walks you through the complete setup for a claustrophobia exposure therapy session."
     ),
 
@@ -203,7 +203,7 @@ private val TUTORIAL_SLIDES = listOf(
         type = SlideType.INFO,
         phase = SlidePhase.GALAXY_WATCH,
         title = "Put on the Galaxy Watch",
-        body = "Make sure the VitalWork Watch app is installed on the watch, then fasten the watch snugly on the patient's wrist, a finger's width above the wrist bone. A loose fit lets the sensors lose skin contact, giving noisy heart-rate and skin-conductance readings.",
+        body = "Make sure the BioCap Watch app is installed on the watch, then fasten the watch snugly on the patient's wrist, a finger's width above the wrist bone. A loose fit lets the sensors lose skin contact, giving noisy heart-rate and skin-conductance readings.",
         imageRes = R.drawable.tutorial_watch_wear_position,
         imageCaption = "Watch snug, a finger above the wrist bone"
     ),
@@ -219,9 +219,9 @@ private val TUTORIAL_SLIDES = listOf(
         type = SlideType.INFO,
         phase = SlidePhase.GALAXY_WATCH,
         title = "Start Tracking on the Watch",
-        body = "Open the VitalWork app on the watch and tap Start. The first time, allow Body Sensors \"all the time\". The watch then streams heart rate, inter-beat interval, and skin conductance to this tablet.",
+        body = "Open the BioCap app on the watch and tap Start. The first time, allow Body Sensors \"all the time\". The watch then streams heart rate, inter-beat interval, and skin conductance to this tablet.",
         imageRes = R.drawable.tutorial_watch_start_tracking,
-        imageCaption = "Tap Start in the VitalWork watch app"
+        imageCaption = "Tap Start in the BioCap watch app"
     ),
     TutorialSlide(
         type = SlideType.INTERACTIVE_WATCH,
@@ -663,7 +663,7 @@ private fun TutorialWelcomeStep() {
             )
 
             Text(
-                text = "Welcome to VitalWork Operator",
+                text = "Welcome to BioCap Operator",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -1351,7 +1351,7 @@ private fun TutorialWatchConnectStep(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "There's no connect button here — open the VitalWork app on the watch and tap Start, and readings will arrive automatically.",
+                        text = "There's no connect button here — open the BioCap app on the watch and tap Start, and readings will arrive automatically.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

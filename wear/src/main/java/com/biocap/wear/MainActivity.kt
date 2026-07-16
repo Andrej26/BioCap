@@ -89,7 +89,7 @@ private fun WatchApp(onStart: () -> Unit, onStop: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Text("VitalWork", style = MaterialTheme.typography.titleMedium)
+        Text("BioCap", style = MaterialTheme.typography.titleMedium)
         Text(status, style = MaterialTheme.typography.bodySmall)
         Button(onClick = { if (tracking) onStop() else onStart() }) {
             Text(if (tracking) "Stop" else "Start")

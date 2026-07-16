@@ -381,7 +381,7 @@ class ScreenShareController @Inject constructor(
     companion object {
         private const val TAG = "ScreenShareController"
         private const val CAPTURE_FPS = 30
-        private const val STREAM_ID = "vitalwork-screen"
+        private const val STREAM_ID = "biocap-screen"
 
         /** Encoder ceiling for screen content. Generous for a LAN (P2P over local Wi-Fi); BALANCED
          *  degradation scales below this under congestion. Tunable. */

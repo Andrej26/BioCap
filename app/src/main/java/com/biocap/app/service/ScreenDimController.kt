@@ -98,7 +98,7 @@ class ScreenDimController(private val appContext: Context) {
 
     companion object {
         private const val TAG = "ScreenDimController"
-        private const val WAKE_LOCK_TAG = "VitalWork:ScreenShareKeepOn"
+        private const val WAKE_LOCK_TAG = "BioCap:ScreenShareKeepOn"
         // 0 fully blanks some panels (looks like a hard power-off); 1 is reliably near-black yet lit.
         private const val MIN_BRIGHTNESS = 1
 

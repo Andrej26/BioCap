@@ -7,7 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import com.biocap.app.data.prefs.DeviceModePreferencesRepository
 import com.biocap.app.presentation.navigation.AppNavigation
 import com.biocap.app.presentation.navigation.Route
-import com.biocap.app.ui.theme.VitalWorkTheme
+import com.biocap.app.ui.theme.BioCapTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
             if (deviceModePreferences.getMode() == null) Route.ModeSelection.route
             else Route.Home.route
         setContent {
-            VitalWorkTheme {
+            BioCapTheme {
                 AppNavigation(startDestination = startDestination)
             }
         }

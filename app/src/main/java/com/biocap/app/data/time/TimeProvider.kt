@@ -10,7 +10,7 @@ import javax.inject.Singleton
  *
  * An Android app cannot set the OS system clock, so this does not change the device time: it returns
  * `System.currentTimeMillis()` plus the NTP offset that [KronosClock] computed at startup (see
- * [com.biocap.app.VitalWorkApplication]). Routing every persisted stamp through here puts the
+ * [com.biocap.app.BioCapApplication]). Routing every persisted stamp through here puts the
  * tablet's data on a single, NTP-corrected UTC timeline so all sensor streams align without any
  * device-to-device clock handshake.
  *

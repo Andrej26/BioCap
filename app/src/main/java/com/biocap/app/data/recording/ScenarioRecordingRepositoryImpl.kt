@@ -368,6 +368,6 @@ class ScenarioRecordingRepositoryImpl(
     }
 
     private companion object {
-        private const val TAG = "VitalWorkLifecycle"
+        private const val TAG = "BioCapLifecycle"
     }
 }

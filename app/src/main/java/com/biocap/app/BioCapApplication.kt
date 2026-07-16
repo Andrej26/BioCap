@@ -15,7 +15,7 @@ import dagger.hilt.components.SingletonComponent
 import java.util.UUID
 
 @HiltAndroidApp
-class VitalWorkApplication : Application() {
+class BioCapApplication : Application() {
 
     /** Hilt can't field-inject an [Application], so pull singletons out via an entry point. */
     @EntryPoint
@@ -58,7 +58,7 @@ class VitalWorkApplication : Application() {
     }
 
     companion object {
-        private const val TAG = "VitalWorkLifecycle"
-        const val BACKGROUND_CHANNEL_ID = "vitalwork_background"
+        private const val TAG = "BioCapLifecycle"
+        const val BACKGROUND_CHANNEL_ID = "biocap_background"
     }
 }

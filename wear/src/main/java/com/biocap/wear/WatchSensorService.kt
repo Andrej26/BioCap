@@ -43,7 +43,7 @@ class WatchSensorService : Service() {
 
     companion object {
         private const val TAG = "WatchSensorService"
-        private const val NOTIF_CHANNEL_ID = "vitalwork_watch_sensors"
+        private const val NOTIF_CHANNEL_ID = "biocap_watch_sensors"
         private const val NOTIF_ID = 1
         const val ACTION_START = "com.biocap.wear.START"
         const val ACTION_STOP = "com.biocap.wear.STOP"
@@ -387,7 +387,7 @@ class WatchSensorService : Service() {
             )
         }
         return Notification.Builder(this, NOTIF_CHANNEL_ID)
-            .setContentTitle("VitalWork")
+            .setContentTitle("BioCap")
             .setContentText("Streaming watch sensors")
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setOngoing(true)

@@ -43,7 +43,7 @@ class PeerMdnsService @Inject constructor(
     private val nsdManager = context.getSystemService(Context.NSD_SERVICE) as NsdManager
     private val wifiManager =
         context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-    private val multicastLock = wifiManager.createMulticastLock("VitalWorkPeerMdns").apply {
+    private val multicastLock = wifiManager.createMulticastLock("BioCapPeerMdns").apply {
         setReferenceCounted(false)
     }
 

@@ -131,7 +131,7 @@ fun SessionDetailScreen(
         AlertDialog(
             onDismissRequest = { showReExportConfirmation = false },
             title = { Text("Re-export session?") },
-            text = { Text("This will overwrite previously exported files in Documents/VitalWork/.") },
+            text = { Text("This will overwrite previously exported files in Documents/BioCap/.") },
             confirmButton = {
                 TextButton(onClick = {
                     showReExportConfirmation = false

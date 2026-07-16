@@ -19,7 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import com.biocap.app.MainActivity
 import com.biocap.app.R
-import com.biocap.app.VitalWorkApplication.Companion.BACKGROUND_CHANNEL_ID
+import com.biocap.app.BioCapApplication.Companion.BACKGROUND_CHANNEL_ID
 import com.biocap.app.data.link.PeerLinkManager
 import com.biocap.app.data.model.ConnectionState
 import com.biocap.app.data.recording.ScenarioRecordingRepository
@@ -319,9 +319,9 @@ class BackgroundConnectionService : Service() {
     }
 
     companion object {
-        private const val TAG = "VitalWorkLifecycle"
+        private const val TAG = "BioCapLifecycle"
         private const val NOTIFICATION_ID = 1001
-        private const val WIFI_LOCK_TAG = "VitalWork:BackgroundConnection"
+        private const val WIFI_LOCK_TAG = "BioCap:BackgroundConnection"
         private const val RESTART_GRACE_MS = 5000L
         const val ACTION_DISCONNECT_LINK = "com.biocap.app.action.DISCONNECT_LINK"
         const val ACTION_START_SCREEN = "com.biocap.app.action.START_SCREEN"

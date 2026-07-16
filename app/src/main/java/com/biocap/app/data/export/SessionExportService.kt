@@ -160,7 +160,7 @@ class SessionExportService @Inject constructor(
         content: ByteArray
     ): String {
         val mimeType = if (fileName.endsWith(".json")) "application/json" else "text/csv"
-        val relativePath = "Documents/VitalWork/$folderName"
+        val relativePath = "Documents/BioCap/$folderName"
 
         val existingUri = findExistingMediaStoreFile(fileName, relativePath)
 
@@ -212,7 +212,7 @@ class SessionExportService @Inject constructor(
     ): String {
         val dir = File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-            "VitalWork/$folderName"
+            "BioCap/$folderName"
         )
         dir.mkdirs()
 

@@ -213,7 +213,7 @@ private fun BatteryReminderCard(onAllow: () -> Unit) {
                 color = MaterialTheme.colorScheme.onErrorContainer
             )
             Text(
-                text = "This device may kill the connection when the screen is off. Exempt VitalWork " +
+                text = "This device may kill the connection when the screen is off. Exempt BioCap " +
                     "from battery optimization to keep the link alive in the background.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onErrorContainer

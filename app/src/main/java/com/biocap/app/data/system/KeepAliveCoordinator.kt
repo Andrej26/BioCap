@@ -56,7 +56,7 @@ class KeepAliveCoordinator @Inject constructor(
 
     /**
      * Begin driving the SESSION reason from the active-session flow. Called once from
-     * [com.biocap.app.VitalWorkApplication.onCreate] so it's live from process start (an ACTIVE
+     * [com.biocap.app.BioCapApplication.onCreate] so it's live from process start (an ACTIVE
      * session surviving a process restart re-acquires SESSION). Idempotent.
      */
     fun start() {

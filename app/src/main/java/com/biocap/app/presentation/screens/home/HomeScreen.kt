@@ -130,7 +130,7 @@ fun HomeScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "VitalWork Operator",
+                        text = "BioCap Operator",
                         fontWeight = FontWeight.SemiBold
                     )
                 },
