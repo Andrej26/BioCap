@@ -14,11 +14,11 @@ val localProps = Properties().apply {
 }
 
 android {
-    namespace = "com.vitalwork.app"
+    namespace = "com.biocap.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.vitalwork.app"
+        applicationId = "com.biocap.app"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

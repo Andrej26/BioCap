@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 VitalWork is an Android mobile application written in Kotlin using Jetpack Compose. It is the **operator-side app** for a research study monitoring **operator physiological state during simulated work scenarios**. The tablet/phone captures physiological data (heart rate, RR/IBI intervals, respiration, EDA) from BLE / audio-jack / Galaxy Watch sensors during each of five biofeedback scenarios (A–E), and uploads the bundled dataset (participant + session + scenarios + samples) to the VitalWork server at session end. A second device can pair over local Wi-Fi (device-to-device link) so the operator watches the monitored device's live screen. (The former VR/reaction-time phase — Meta Quest link, Ktor HTTP server, UDP beacon — was removed in the biofeedback pivot; see DB history v5/v6.)
 
-**Package:** `com.vitalwork.app`
+**Package:** `com.biocap.app`
 
 **Tech Stack:**
 - Kotlin 2.3.0 with Jetpack Compose (BOM 2026.01.00)
@@ -88,7 +88,7 @@ The app has three main responsibilities:
 **Dependency Management:** All versions and dependencies are centralized in `gradle/libs.versions.toml`. Add new dependencies there first, then reference them in `app/build.gradle.kts` using the `libs.` accessor.
 
 **App Configuration (`app/build.gradle.kts`):**
-- Application ID: `com.vitalwork.app`
+- Application ID: `com.biocap.app`
 - Min SDK 24, Target/Compile SDK 36
 - Java 11 compatibility
 - Compose build feature enabled
@@ -167,7 +167,7 @@ Docs (in [doc/](doc/)): [peer_link_websocket.md](doc/peer_link_websocket.md) (li
 ## Package Structure
 
 ```
-com.vitalwork.app/
+com.biocap.app/
 ├── MainActivity.kt
 ├── VitalWorkApplication.kt        # Hilt application class
 ├── di/
@@ -342,10 +342,10 @@ com.vitalwork.app/
     └── Type.kt
 ```
 
-**`:wear` module** (`com.vitalwork.wear`):
+**`:wear` module** (`com.biocap.wear`):
 
 ```
-com.vitalwork.wear/
+com.biocap.wear/
 ├── MainActivity.kt           # Minimal Start/Stop watch UI + runtime permission requests
 ├── WatchSensorService.kt          # Foreground health service; owns the Samsung SDK, flush() loop, heartbeat; emit() persists to store + streams
 ├── WatchSampleStore.kt            # Append-only JSON-lines durable store; truncate-after-ack (store-and-forward)

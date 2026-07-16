@@ -108,7 +108,7 @@ data class PeerMessage(
 
 You need a tiny duplex channel that: (a) lets the server send `request_screen`, and (b) delivers each
 incoming `PeerMessage` to a callback. Below is the essence (full version:
-[PeerLinkManagerImpl.kt](../app/src/main/java/com/vitalwork/app/data/link/PeerLinkManagerImpl.kt)).
+[PeerLinkManagerImpl.kt](../app/src/main/java/com/biocap/app/data/link/PeerLinkManagerImpl.kt)).
 
 **Server** (run on the operator device):
 
@@ -150,7 +150,7 @@ client.connect()
 ```
 
 > **How does the client get `serverIp`?** Either type it (the server can show its own IP — see
-> `LanAddress.localIpv4()` in [LanAddress.kt](../app/src/main/java/com/vitalwork/app/data/link/LanAddress.kt),
+> `LanAddress.localIpv4()` in [LanAddress.kt](../app/src/main/java/com/biocap/app/data/link/LanAddress.kt),
 > a one-method UDP trick), or auto-discover it with mDNS ([mdns_discovery.md](mdns_discovery.md)).
 
 > **Threading:** Java-WebSocket calls these callbacks on its own threads. Don't touch UI directly from

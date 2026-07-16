@@ -67,7 +67,7 @@ This produces `wear\build\outputs\apk\debug\wear-debug.apk`.
 `-r` reinstalls/updates in place (keeps it as the same app). You want `Success`.
 
 > Why `-s <address>`? The watch and tablet **share the same applicationId**
-> (`com.vitalwork.app`). If you run a plain `:wear:installDebug` while both are connected,
+> (`com.biocap.app`). If you run a plain `:wear:installDebug` while both are connected,
 > Gradle/adb may try to install on the wrong device. Targeting by serial avoids that. If
 > *only the watch* is connected, you can instead just run
 > `.\gradlew.bat :wear:installDebug`.
@@ -114,7 +114,7 @@ $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot\"
 | `failed to authenticate` / `unauthorized` | Accept the "Allow wireless debugging" prompt on the watch, then re-run `adb connect`. |
 | `cannot connect ... No connection could be made` | Re-check IP **and port** on the watch (port changes on toggle/reboot); confirm same Wi-Fi; toggle Wireless debugging off/on. |
 | `device offline` | `& $adb disconnect`, then `& $adb connect <address>` again. |
-| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` (signature mismatch) | Uninstall first: `& $adb -s <watch> uninstall com.vitalwork.app`, then install again. |
+| `INSTALL_FAILED_UPDATE_INCOMPATIBLE` (signature mismatch) | Uninstall first: `& $adb -s <watch> uninstall com.biocap.app`, then install again. |
 | Watch dropped off Wi-Fi | It sleeps/changes networks; just redo Step 1–2. The connection isn't permanent. |
 | `adb` not found | Use the full path shown above, or add `…\Sdk\platform-tools` to PATH. |
 

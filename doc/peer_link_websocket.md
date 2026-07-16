@@ -155,15 +155,15 @@ backgrounded socket and detects a dead peer (→ `onClose` → teardown).
 
 | File | Role |
 |------|------|
-| [data/link/PeerLinkManager.kt](../app/src/main/java/com/vitalwork/app/data/link/PeerLinkManager.kt) | Interface — the single source of truth for the link |
-| [data/link/PeerLinkManagerImpl.kt](../app/src/main/java/com/vitalwork/app/data/link/PeerLinkManagerImpl.kt) | Java-WebSocket server + client implementation |
-| [data/link/PeerMdnsService.kt](../app/src/main/java/com/vitalwork/app/data/link/PeerMdnsService.kt) | mDNS register/discover via `NsdManager` |
-| [data/link/LanAddress.kt](../app/src/main/java/com/vitalwork/app/data/link/LanAddress.kt) | Local IPv4 resolution for the advertised label |
-| [data/link/PeerRole.kt](../app/src/main/java/com/vitalwork/app/data/link/PeerRole.kt) | `enum PeerRole { SERVER, CLIENT }` |
-| [data/link/model/PeerMessage.kt](../app/src/main/java/com/vitalwork/app/data/link/model/PeerMessage.kt) | Wire envelope (pairing + signaling) |
-| [data/link/model/PeerDevice.kt](../app/src/main/java/com/vitalwork/app/data/link/model/PeerDevice.kt) | Resolved peer (name/host/port) |
-| [.../screens/link/PeerLinkViewModel.kt](../app/src/main/java/com/vitalwork/app/presentation/screens/link/PeerLinkViewModel.kt) | UI state + role selection |
-| [.../screens/link/PeerLinkScreen.kt](../app/src/main/java/com/vitalwork/app/presentation/screens/link/PeerLinkScreen.kt) | Compose UI (status, discovered peers, log, screen monitor) |
+| [data/link/PeerLinkManager.kt](../app/src/main/java/com/biocap/app/data/link/PeerLinkManager.kt) | Interface — the single source of truth for the link |
+| [data/link/PeerLinkManagerImpl.kt](../app/src/main/java/com/biocap/app/data/link/PeerLinkManagerImpl.kt) | Java-WebSocket server + client implementation |
+| [data/link/PeerMdnsService.kt](../app/src/main/java/com/biocap/app/data/link/PeerMdnsService.kt) | mDNS register/discover via `NsdManager` |
+| [data/link/LanAddress.kt](../app/src/main/java/com/biocap/app/data/link/LanAddress.kt) | Local IPv4 resolution for the advertised label |
+| [data/link/PeerRole.kt](../app/src/main/java/com/biocap/app/data/link/PeerRole.kt) | `enum PeerRole { SERVER, CLIENT }` |
+| [data/link/model/PeerMessage.kt](../app/src/main/java/com/biocap/app/data/link/model/PeerMessage.kt) | Wire envelope (pairing + signaling) |
+| [data/link/model/PeerDevice.kt](../app/src/main/java/com/biocap/app/data/link/model/PeerDevice.kt) | Resolved peer (name/host/port) |
+| [.../screens/link/PeerLinkViewModel.kt](../app/src/main/java/com/biocap/app/presentation/screens/link/PeerLinkViewModel.kt) | UI state + role selection |
+| [.../screens/link/PeerLinkScreen.kt](../app/src/main/java/com/biocap/app/presentation/screens/link/PeerLinkScreen.kt) | Compose UI (status, discovered peers, log, screen monitor) |
 
 ### Data Flow
 

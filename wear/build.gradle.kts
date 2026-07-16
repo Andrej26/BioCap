@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.vitalwork.wear"
+    namespace = "com.biocap.wear"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.vitalwork.app"
+        applicationId = "com.biocap.app"
         // Samsung Health Sensor SDK requires API 28+ (Galaxy Watch4 and later).
         minSdk = 28
         targetSdk = 36

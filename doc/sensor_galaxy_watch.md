@@ -453,7 +453,7 @@ phone's `WatchCommandSender` can resolve its node.
 > the Samsung `READ_ADDITIONAL_HEALTH_DATA` — `BODY_SENSORS` alone returns PERMISSION_ERROR.
 > `BODY_SENSORS_BACKGROUND` is requested **separately** and routed to a settings screen
 > ("Allow all the time"). For testing it can be granted directly:
-> `adb shell pm grant com.vitalwork.app android.permission.BODY_SENSORS_BACKGROUND`.
+> `adb shell pm grant com.biocap.app android.permission.BODY_SENSORS_BACKGROUND`.
 
 ### Tablet side (`:app`)
 
@@ -474,7 +474,7 @@ permissions on the tablet — it only receives messages and DataItems.
 
 ## Project / Build Setup
 
-- **Module:** `:wear` (`com.android.application`, same `applicationId "com.vitalwork.app"`),
+- **Module:** `:wear` (`com.android.application`, same `applicationId "com.biocap.app"`),
   `minSdk 28` (Samsung Sensor SDK floor; Watch 8 far exceeds it), compile/target 36.
 - **Samsung SDK** is a local AAR at `wear/libs/samsung-health-sensor-api-1.4.1.aar`, wired as:
   ```kotlin
@@ -493,16 +493,16 @@ permissions on the tablet — it only receives messages and DataItems.
 
 | File | Role |
 |------|------|
-| [wear/.../WatchSensorService.kt](../wear/src/main/java/com/vitalwork/wear/WatchSensorService.kt) | Foreground `health` service; owns the Samsung SDK, registers trackers, runs the `flush()` loop, sends `STOP` |
-| [wear/.../WatchDataSender.kt](../wear/src/main/java/com/vitalwork/wear/WatchDataSender.kt) | `MessageClient` sender; resolves & caches the `vitalwork_phone` node |
-| [wear/.../WatchMessage.kt](../wear/src/main/java/com/vitalwork/wear/WatchMessage.kt) | Builds the JSON lines (`reading`, `capabilities`, `batch`, `stop`) |
-| [wear/.../MainActivity.kt](../wear/src/main/java/com/vitalwork/wear/MainActivity.kt) | Minimal Start/Stop watch UI; requests runtime permissions |
-| [app/.../data/sensor/watch/WatchListenerService.kt](../app/src/main/java/com/vitalwork/app/data/sensor/watch/WatchListenerService.kt) | `WearableListenerService`; parses messages → receiver |
-| [app/.../data/sensor/watch/WatchSensorReceiver.kt](../app/src/main/java/com/vitalwork/app/data/sensor/watch/WatchSensorReceiver.kt) | Hilt singleton sink; exposes flows; inferred connection state + watchdog |
-| [app/.../data/sensor/watch/model/WatchReading.kt](../app/src/main/java/com/vitalwork/app/data/sensor/watch/model/WatchReading.kt) | `WatchReading(type, value, accuracy, t)` |
-| [app/.../presentation/screens/sensors/watch/WatchSensorScreen.kt](../app/src/main/java/com/vitalwork/app/presentation/screens/sensors/watch/WatchSensorScreen.kt) | Sensors → Galaxy Watch live-readings screen |
-| [app/.../presentation/screens/sensors/watch/WatchSensorViewModel.kt](../app/src/main/java/com/vitalwork/app/presentation/screens/sensors/watch/WatchSensorViewModel.kt) | Reads receiver flows for the screen; also tracks the **phone's Bluetooth adapter** state (`ACTION_STATE_CHANGED` receiver → `bluetoothEnabled` flow) |
-| [app/.../presentation/components/BluetoothDisabledCard.kt](../app/src/main/java/com/vitalwork/app/presentation/components/BluetoothDisabledCard.kt) | Reusable "Bluetooth Disabled — tap to enable" warning card, shared with the eSense Pulse screen |
+| [wear/.../WatchSensorService.kt](../wear/src/main/java/com/biocap/wear/WatchSensorService.kt) | Foreground `health` service; owns the Samsung SDK, registers trackers, runs the `flush()` loop, sends `STOP` |
+| [wear/.../WatchDataSender.kt](../wear/src/main/java/com/biocap/wear/WatchDataSender.kt) | `MessageClient` sender; resolves & caches the `vitalwork_phone` node |
+| [wear/.../WatchMessage.kt](../wear/src/main/java/com/biocap/wear/WatchMessage.kt) | Builds the JSON lines (`reading`, `capabilities`, `batch`, `stop`) |
+| [wear/.../MainActivity.kt](../wear/src/main/java/com/biocap/wear/MainActivity.kt) | Minimal Start/Stop watch UI; requests runtime permissions |
+| [app/.../data/sensor/watch/WatchListenerService.kt](../app/src/main/java/com/biocap/app/data/sensor/watch/WatchListenerService.kt) | `WearableListenerService`; parses messages → receiver |
+| [app/.../data/sensor/watch/WatchSensorReceiver.kt](../app/src/main/java/com/biocap/app/data/sensor/watch/WatchSensorReceiver.kt) | Hilt singleton sink; exposes flows; inferred connection state + watchdog |
+| [app/.../data/sensor/watch/model/WatchReading.kt](../app/src/main/java/com/biocap/app/data/sensor/watch/model/WatchReading.kt) | `WatchReading(type, value, accuracy, t)` |
+| [app/.../presentation/screens/sensors/watch/WatchSensorScreen.kt](../app/src/main/java/com/biocap/app/presentation/screens/sensors/watch/WatchSensorScreen.kt) | Sensors → Galaxy Watch live-readings screen |
+| [app/.../presentation/screens/sensors/watch/WatchSensorViewModel.kt](../app/src/main/java/com/biocap/app/presentation/screens/sensors/watch/WatchSensorViewModel.kt) | Reads receiver flows for the screen; also tracks the **phone's Bluetooth adapter** state (`ACTION_STATE_CHANGED` receiver → `bluetoothEnabled` flow) |
+| [app/.../presentation/components/BluetoothDisabledCard.kt](../app/src/main/java/com/biocap/app/presentation/components/BluetoothDisabledCard.kt) | Reusable "Bluetooth Disabled — tap to enable" warning card, shared with the eSense Pulse screen |
 
 ### Phone-side Bluetooth warning (UI)
 
@@ -616,12 +616,12 @@ See **Store-and-Forward + Remote Flush**.
   ```bash
   # GMS is receiving on our path (read count climbs ~1/s)?
   adb -s <phone> shell dumpsys activity service \
-    com.google.android.gms.wearable.service.WearableService | grep "com.vitalwork.app: writes/reads"
+    com.google.android.gms.wearable.service.WearableService | grep "com.biocap.app: writes/reads"
   # ...but the listener isn't logging the message?
   adb -s <phone> logcat -s WatchListenerService    # expect "rx {...}" lines once healthy
   ```
   Read count rising + no `rx` lines = stale GMS binding.
-- **Fix:** `adb -s <phone> shell am force-stop com.vitalwork.app`, then relaunch the app. This
+- **Fix:** `adb -s <phone> shell am force-stop com.biocap.app`, then relaunch the app. This
   clears GMS's cached binding; data lands immediately. (`WatchListenerService` logs each accepted
   message as `rx <body>` to make this unambiguous — previously it only logged on parse errors, so a
   working-but-silent success path looked dead.)
@@ -639,7 +639,7 @@ adb -s <watch> shell dumpsys power | grep -E "mWakefulness=|VitalWork"
 # Is the SDK firing 1/s or in bursts?
 adb -s <watch> logcat -s SHS#EDAContinuousSensor WatchDataSender
 # Is the foreground service resident and typed HEALTH?
-adb -s <watch> shell dumpsys activity services com.vitalwork.app
+adb -s <watch> shell dumpsys activity services com.biocap.app
 # Did the watch resolve the tablet node? (healthy: "Resolved tablet node <id>")
 adb -s <watch> logcat -s WatchDataSender
 # Can the watch even see the tablet's capability? (expect the tablet under Reachable Nodes, isNearby=true)
@@ -649,7 +649,7 @@ adb -s <watch> shell dumpsys activity service \
 adb -s <phone> logcat -s WatchListenerService
 # Transport sanity: is GMS receiving on our path but NOT dispatching? (read count climbs, no rx lines = stale binding → force-stop the app)
 adb -s <phone> shell dumpsys activity service \
-  com.google.android.gms.wearable.service.WearableService | grep "com.vitalwork.app: writes/reads"
+  com.google.android.gms.wearable.service.WearableService | grep "com.biocap.app: writes/reads"
 ```
 
 > **Note (Windows / PowerShell):** `adb` may not be on `PATH` — it lives at
