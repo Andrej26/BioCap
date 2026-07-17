@@ -38,7 +38,7 @@ class SessionUploadMapperTest {
     private fun session() = SessionEntity(
         id = 1L,
         participantId = 1L,
-        sessionCode = "VW-A-260101-120000",
+        sessionCode = "BC-A-260101-120000",
         startedAt = 1_790_509_812_000L,
         endedAt = 1_790_510_412_000L,
         status = SessionStatus.COMPLETED,
@@ -59,7 +59,7 @@ class SessionUploadMapperTest {
         assertEquals(31, request.participant.age)
         assertEquals("male", request.participant.gender)
 
-        assertEquals("VW-A-260101-120000", request.session.sessionCode)
+        assertEquals("BC-A-260101-120000", request.session.sessionCode)
         assertEquals(1_790_509_812_000L, request.session.startedAt)
         assertEquals(1_790_510_412_000L, request.session.endedAt)
         assertEquals("COMPLETED", request.session.status)

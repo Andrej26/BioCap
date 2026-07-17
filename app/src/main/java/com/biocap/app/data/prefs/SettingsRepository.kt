@@ -13,7 +13,7 @@ const val DEFAULT_DEVICE_PREFIX = "A"
 
 /**
  * Per-device operator settings. The device prefix tags both generated participant codes
- * (`A-001`) and session codes (`VW-A-…`) so multiple tablets testing at the same time never
+ * (`A-001`) and session codes (`BC-A-…`) so multiple tablets testing at the same time never
  * mint colliding codes.
  */
 interface SettingsRepository {

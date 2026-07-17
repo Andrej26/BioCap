@@ -43,9 +43,9 @@ class SessionRepositoryTest {
     fun createSession_formatsCodeCorrectly() = runTest {
         val session = repository.createSession(participantId = 1L)
 
-        assertTrue(session.sessionCode.startsWith("VW-A-"))
-        // Tail after "VW-A-" is the yyMMdd-HHmmss timestamp token.
-        assertTrue(session.sessionCode.removePrefix("VW-A-").matches(Regex("\\d{6}-\\d{6}")))
+        assertTrue(session.sessionCode.startsWith("BC-A-"))
+        // Tail after "BC-A-" is the yyMMdd-HHmmss timestamp token.
+        assertTrue(session.sessionCode.removePrefix("BC-A-").matches(Regex("\\d{6}-\\d{6}")))
         assertEquals(SessionStatus.ACTIVE, session.status)
         assertEquals(1L, session.participantId)
     }

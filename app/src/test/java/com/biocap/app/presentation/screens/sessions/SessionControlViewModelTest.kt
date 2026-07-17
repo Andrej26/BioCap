@@ -97,7 +97,7 @@ class SessionControlViewModelTest {
         val session = SessionEntity(
             id = id,
             participantId = 1L,
-            sessionCode = "VW-260413-100000",
+            sessionCode = "BC-260413-100000",
             startedAt = System.currentTimeMillis(),
             status = SessionStatus.ACTIVE
         )
@@ -166,7 +166,7 @@ class SessionControlViewModelTest {
         advanceUntilIdle()
 
         assertEquals(seeded.id, vm.session.value?.id)
-        assertEquals("VW-260413-100000", vm.session.value?.sessionCode)
+        assertEquals("BC-260413-100000", vm.session.value?.sessionCode)
     }
 
     @Test

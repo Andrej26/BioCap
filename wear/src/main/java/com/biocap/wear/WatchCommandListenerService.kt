@@ -30,7 +30,7 @@ class WatchCommandListenerService : WearableListenerService() {
 
     private companion object {
         const val TAG = "WatchCommandListener"
-        const val COMMAND_PATH = "/vitalwork/command"
+        const val COMMAND_PATH = "/biocap/command"
         const val CMD_START = "START"
         const val CMD_STOP = "STOP"
         const val CMD_FLUSH = "FLUSH"

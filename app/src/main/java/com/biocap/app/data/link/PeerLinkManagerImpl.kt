@@ -62,7 +62,7 @@ class PeerLinkManagerImpl @Inject constructor(
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
     private val modelName = Build.MODEL.replace(' ', '-')
-    private val deviceName = "VitalWork-$modelName"
+    private val deviceName = "BioCap-$modelName"
 
     private val _connectionState = MutableStateFlow(ConnectionState.DISCONNECTED)
     override val connectionState: StateFlow<ConnectionState> = _connectionState.asStateFlow()

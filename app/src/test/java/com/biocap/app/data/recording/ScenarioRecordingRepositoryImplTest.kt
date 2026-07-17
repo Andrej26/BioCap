@@ -112,7 +112,7 @@ class ScenarioRecordingRepositoryImplTest {
         connectEsensePulse()
         respirationDevice.state.value = DeviceState.Streaming
 
-        sut.startRecording(scenarioId = scenario.id, scenarioIdentifier = "VW-X-A1")
+        sut.startRecording(scenarioId = scenario.id, scenarioIdentifier = "BC-X-A1")
 
         assertEquals(DataRecordingState.RECORDING, sut.recordingState.value)
         val metadata = sut.recordingMetadata.value
@@ -128,8 +128,8 @@ class ScenarioRecordingRepositoryImplTest {
         val scenario = seedScenario()
         connectEsensePulse()
 
-        sut.startRecording(scenario.id, "VW-X-A1")
-        sut.startRecording(scenario.id, "VW-X-A1")
+        sut.startRecording(scenario.id, "BC-X-A1")
+        sut.startRecording(scenario.id, "BC-X-A1")
 
         // No second metadata snapshot ID change, no second start
         assertEquals(DataRecordingState.RECORDING, sut.recordingState.value)
@@ -141,7 +141,7 @@ class ScenarioRecordingRepositoryImplTest {
         val scenario = seedScenario()
         connectEsensePulse()
 
-        sut.startRecording(scenario.id, "VW-X-A1")
+        sut.startRecording(scenario.id, "BC-X-A1")
 
         assertEquals(1, bleManager.enableHrNotificationsCallCount)
     }
@@ -152,7 +152,7 @@ class ScenarioRecordingRepositoryImplTest {
         val scenario = seedScenario()
         respirationDevice.state.value = DeviceState.Connected
 
-        sut.startRecording(scenario.id, "VW-X-A1")
+        sut.startRecording(scenario.id, "BC-X-A1")
 
         assertEquals(1, respirationDevice.startStreamingCallCount)
     }
@@ -164,7 +164,7 @@ class ScenarioRecordingRepositoryImplTest {
         connectEsensePulse()
         respirationDevice.state.value = DeviceState.Streaming
 
-        sut.startRecording(scenario.id, "VW-X-A1")
+        sut.startRecording(scenario.id, "BC-X-A1")
 
         bleManager.heartRateSampleFlow.emit(72f)
         bleManager.rrIntervalSampleFlow.emit(833f)
@@ -186,7 +186,7 @@ class ScenarioRecordingRepositoryImplTest {
         val sut = createSut(TimeProvider { clock })
         val scenario = seedScenario()
         connectEsensePulse()
-        sut.startRecording(scenario.id, "VW-X-A1")
+        sut.startRecording(scenario.id, "BC-X-A1")
 
         // Two HR readings stamped in the SAME millisecond → the second is a byte-identical duplicate.
         bleManager.heartRateSampleFlow.emit(72f)
@@ -211,7 +211,7 @@ class ScenarioRecordingRepositoryImplTest {
         val sut = createSut(TimeProvider { 5_000L })
         val scenario = seedScenario()
         connectEsensePulse()
-        sut.startRecording(scenario.id, "VW-X-A1")
+        sut.startRecording(scenario.id, "BC-X-A1")
 
         // Several RR intervals arrive from one BLE notification: distinct measurements that share a
         // timestamp. They must NOT be deduped (unlike HR), or real beat-interval data is lost.
@@ -231,7 +231,7 @@ class ScenarioRecordingRepositoryImplTest {
         val scenario = seedScenario()
         connectEsensePulse()
 
-        sut.startRecording(scenario.id, "VW-X-A1")
+        sut.startRecording(scenario.id, "BC-X-A1")
         sut.stopRecording()
 
         val updated = fakeScenarioDao.getScenarioById(scenario.id)!!
@@ -250,7 +250,7 @@ class ScenarioRecordingRepositoryImplTest {
         val sut = createSut()
         val scenario = seedScenario()
 
-        sut.startRecording(scenario.id, "VW-X-A1")
+        sut.startRecording(scenario.id, "BC-X-A1")
         val metadata = sut.recordingMetadata.value!!
         assertFalse(metadata.heartRateRecording)
         assertFalse(metadata.respirationRecording)
@@ -265,7 +265,7 @@ class ScenarioRecordingRepositoryImplTest {
         val sut = createSut(TimeProvider { clock })
         val scenario = seedScenario()
         connectEsensePulse()
-        sut.startRecording(scenario.id, "VW-X-A1")
+        sut.startRecording(scenario.id, "BC-X-A1")
 
         // Advance the clock per reading so each lands in a distinct millisecond (as real HR does);
         // otherwise same-millisecond dedup would collapse them.

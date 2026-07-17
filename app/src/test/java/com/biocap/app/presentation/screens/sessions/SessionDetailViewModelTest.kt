@@ -83,7 +83,7 @@ class SessionDetailViewModelTest {
         val session = SessionEntity(
             id = sessionId,
             participantId = 1L,
-            sessionCode = "VW-260101-120000",
+            sessionCode = "BC-260101-120000",
             startedAt = 1_000L,
             status = status
         )
@@ -217,7 +217,7 @@ class SessionDetailViewModelTest {
         seedScenario(id = 10)
         // Auto-upload would mark UPLOADED, so block it to isolate export behavior.
         uploader.result = Result.failure(IllegalStateException("offline"))
-        exporter.result = Result.success("Documents/VitalWork/VW-260101-120000/export.json")
+        exporter.result = Result.success("Documents/BioCap/BC-260101-120000/export.json")
 
         val vm = newViewModel()
         advanceUntilIdle()
@@ -228,7 +228,7 @@ class SessionDetailViewModelTest {
         val state = vm.uiState.value
         assertFalse(state.isExporting)
         assertEquals(
-            "Exported to: Documents/VitalWork/VW-260101-120000/export.json",
+            "Exported to: Documents/BioCap/BC-260101-120000/export.json",
             state.exportResult
         )
         // Crucially: export does NOT set UPLOADED.

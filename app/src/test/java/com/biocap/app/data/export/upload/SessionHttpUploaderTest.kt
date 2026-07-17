@@ -56,7 +56,7 @@ class SessionHttpUploaderTest {
         participantDao.participants.add(ParticipantEntity(id = 1L, participantCode = "A-001"))
         sessionDao.sessions.add(
             SessionEntity(
-                id = sessionId, participantId = 1L, sessionCode = "VW-A-260101-120000",
+                id = sessionId, participantId = 1L, sessionCode = "BC-A-260101-120000",
                 startedAt = 1_000L, status = SessionStatus.COMPLETED
             )
         )

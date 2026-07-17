@@ -99,14 +99,14 @@
                 <data
                     android:scheme="wear"
                     android:host="*"
-                    android:pathPrefix="/vitalwork/sensors" />
+                    android:pathPrefix="/biocap/sensors" />
             </intent-filter>
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <data
                     android:scheme="wear"
                     android:host="*"
-                    android:pathPrefix="/vitalwork/flush" />
+                    android:pathPrefix="/biocap/flush" />
             </intent-filter>
         </service>
     </application>

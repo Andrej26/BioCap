@@ -24,7 +24,7 @@ import javax.inject.Inject
  * Receives the Galaxy Watch's sensor readings as individual Data Layer messages.
  *
  * Framework-instantiated via the manifest intent-filter (action MESSAGE_RECEIVED, path
- * /vitalwork/sensors); auto-starts the app on a matching message even if it isn't running.
+ * /biocap/sensors); auto-starts the app on a matching message even if it isn't running.
  * Each message body is one JSON reading — parsed and forwarded to the singleton
  * [WatchSensorReceiver]. Stateless: there is no channel/stream to stall, so no "freeze."
  */
@@ -33,8 +33,8 @@ class WatchListenerService : WearableListenerService() {
 
     companion object {
         private const val TAG = "WatchListenerService"
-        private const val MESSAGE_PATH = "/vitalwork/sensors"
-        private const val FLUSH_PATH_PREFIX = "/vitalwork/flush"
+        private const val MESSAGE_PATH = "/biocap/sensors"
+        private const val FLUSH_PATH_PREFIX = "/biocap/flush"
     }
 
     @Inject lateinit var receiver: WatchSensorReceiver

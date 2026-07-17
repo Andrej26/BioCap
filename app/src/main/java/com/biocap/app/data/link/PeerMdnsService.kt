@@ -36,8 +36,8 @@ class PeerMdnsService @Inject constructor(
         private const val TAG = "PeerMdnsService"
 
         /** Android's register API wants no trailing dot; discover wants one (proven asymmetry). */
-        const val SERVICE_TYPE_REGISTER = "_vitalwork._tcp"
-        const val SERVICE_TYPE_DISCOVER = "_vitalwork._tcp."
+        const val SERVICE_TYPE_REGISTER = "_biocap._tcp"
+        const val SERVICE_TYPE_DISCOVER = "_biocap._tcp."
     }
 
     private val nsdManager = context.getSystemService(Context.NSD_SERVICE) as NsdManager

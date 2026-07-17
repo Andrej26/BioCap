@@ -31,7 +31,7 @@ import com.biocap.app.data.link.PeerRole
 
 /**
  * Per-device settings. The device prefix (A/B/C/D) tags every participant code (`A-001`) and session
- * code (`VW-A-…`) generated on this tablet, and also scopes the device-to-device link to one pair.
+ * code (`BC-A-…`) generated on this tablet, and also scopes the device-to-device link to one pair.
  * Rule: **both devices of a pair (server + client) use the same letter**; different pairs use
  * different letters, so codes don't collide and each client only links to its own server. Operators
  * must agree beforehand which letter each pair owns.

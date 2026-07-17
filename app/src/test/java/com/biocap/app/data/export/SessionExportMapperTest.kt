@@ -179,13 +179,13 @@ class SessionExportMapperTest {
     fun buildExportData_sessionFieldsMapped() = runTest {
         val participant = participant()
         val session = session(
-            sessionCode = "VW-260528-143012",
+            sessionCode = "BC-260528-143012",
             status = SessionStatus.UPLOADED
         )
 
         val result = mapper.buildExportData(participant, session, emptyList())
 
-        assertEquals("VW-260528-143012", result.session.sessionCode)
+        assertEquals("BC-260528-143012", result.session.sessionCode)
         assertEquals("UPLOADED", result.session.status)
         assertEquals("2.1.0", result.version)
     }
@@ -216,7 +216,7 @@ class SessionExportMapperTest {
     ) = ParticipantEntity(id = 1L, participantCode = code, age = age, gender = gender)
 
     private fun session(
-        sessionCode: String = "VW-260528-143012",
+        sessionCode: String = "BC-260528-143012",
         status: SessionStatus = SessionStatus.COMPLETED,
         scenarioCount: Int = 0,
         hrSampleCount: Int = 0,

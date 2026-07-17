@@ -77,7 +77,7 @@ class ParticipantEntryViewModelTest {
             SessionEntity(
                 id = 5L,
                 participantId = 1L,
-                sessionCode = "VW-X",
+                sessionCode = "BC-X",
                 startedAt = 0L,
                 status = SessionStatus.ACTIVE
             )

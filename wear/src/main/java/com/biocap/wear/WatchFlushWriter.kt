@@ -29,7 +29,7 @@ class WatchFlushWriter(context: Context) {
 
     private companion object {
         const val TAG = "WatchFlushWriter"
-        const val FLUSH_PATH_PREFIX = "/vitalwork/flush"
+        const val FLUSH_PATH_PREFIX = "/biocap/flush"
         /** Rows per DataItem. ~1 Hz × 3 streams → a few hundred rows keeps each item well under 100 KB. */
         const val CHUNK_SIZE = 300
     }

@@ -33,8 +33,8 @@ interface WatchCommandSender {
     suspend fun sendFlushAck(throughTimestampMs: Long): Boolean
 
     companion object {
-        const val WATCH_CAPABILITY = "vitalwork_watch"
-        const val COMMAND_PATH = "/vitalwork/command"
+        const val WATCH_CAPABILITY = "biocap_watch"
+        const val COMMAND_PATH = "/biocap/command"
         const val CMD_START = "START"
         const val CMD_STOP = "STOP"
         const val CMD_FLUSH = "FLUSH"

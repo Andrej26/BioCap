@@ -19,7 +19,7 @@ interface ScenarioRecordingRepository {
      * buffered and persisted with `scenarioId = [scenarioId]`.
      *
      * @param scenarioId The database ID of the scenario.
-     * @param scenarioIdentifier Display/log identifier (e.g. "VW-260528-143012-A1"); not stored.
+     * @param scenarioIdentifier Display/log identifier (e.g. "BC-260528-143012-A1"); not stored.
      */
     suspend fun startRecording(scenarioId: Long, scenarioIdentifier: String)
 

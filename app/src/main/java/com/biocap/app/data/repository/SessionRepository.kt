@@ -54,7 +54,7 @@ class SessionRepository @Inject constructor(
         val startedAt = timeProvider.nowMs()
         val timestampToken = TimeFormats.codeToken(startedAt)
         val prefix = settingsRepository.getDevicePrefix()
-        val sessionCode = "VW-$prefix-$timestampToken"
+        val sessionCode = "BC-$prefix-$timestampToken"
         return SessionEntity(
             participantId = participantId,
             sessionCode = sessionCode,

@@ -29,8 +29,8 @@ class WatchDataSender(context: Context) {
 
     companion object {
         private const val TAG = "WatchDataSender"
-        const val PHONE_CAPABILITY = "vitalwork_phone"
-        const val MESSAGE_PATH = "/vitalwork/sensors"
+        const val PHONE_CAPABILITY = "biocap_phone"
+        const val MESSAGE_PATH = "/biocap/sensors"
 
         /** Retry node resolution at Start so a not-yet-propagated tablet capability isn't fatal. */
         private const val CONNECT_RETRIES = 10
