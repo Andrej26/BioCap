@@ -2,7 +2,7 @@
 
 ## Overview
 
-The peer link is a direct device-to-device channel between two VitalWork tablets/phones on the same
+The peer link is a direct device-to-device channel between two BioCap tablets/phones on the same
 Wi-Fi network. One device runs as the **server** (host) and the other as the **client**; once paired
 they exchange small JSON messages over a single WebSocket. The link is used for two things:
 
@@ -72,9 +72,9 @@ Signaling fields default to `null` so legacy `hello`/`log` messages (and their t
 
 | Constant | Value |
 |----------|-------|
-| Register service type | `_vitalwork._tcp` |
-| Discover service type | `_vitalwork._tcp.` |
-| Advertised name | `VitalWork-{Build.MODEL}` (spaces → `-`) |
+| Register service type | `_biocap._tcp` |
+| Discover service type | `_biocap._tcp.` |
+| Advertised name | `BioCap-{Build.MODEL}` (spaces → `-`) |
 
 The server calls `register(deviceName, PORT)`; the client calls `startDiscovery()` and resolved peers
 appear as `PeerDevice(name, host, port)` in `discoveredDevices`. Requires the

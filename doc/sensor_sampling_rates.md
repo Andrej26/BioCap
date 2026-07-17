@@ -1,6 +1,6 @@
 # Sensor Sampling Rates
 
-Sampling rates, data types, and synchronization approach for all sensors in VitalWork.
+Sampling rates, data types, and synchronization approach for all sensors in BioCap.
 
 ## Overview
 

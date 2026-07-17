@@ -1,4 +1,4 @@
-# Installing the VitalWork app on the Galaxy Watch (over Wi-Fi)
+# Installing the BioCap app on the Galaxy Watch (over Wi-Fi)
 
 How to put the latest `:wear` build on the Galaxy Watch 8 whenever there's an update. The watch
 connects over **Wi-Fi** (no cable), using Android's Wireless debugging.
@@ -29,7 +29,7 @@ You'll see something like `192.168.100.37:33479`.
 > reboot). The IP can also change. Always re-check this screen — don't assume last time's value.
 
 ### Step 2 — Connect adb to the watch
-In a PowerShell window in the project folder (`d:\00_Projekty_Praca\VitalWork`):
+In a PowerShell window in the project folder (`d:\00_Projekty_Praca\BioCap`):
 
 ```powershell
 $adb = "C:\Users\andre\AppData\Local\Android\Sdk\platform-tools\adb.exe"
@@ -73,7 +73,7 @@ This produces `wear\build\outputs\apk\debug\wear-debug.apk`.
 > `.\gradlew.bat :wear:installDebug`.
 
 ### Step 5 — Launch & verify
-Open **VitalWork** on the watch and tap **Start**. On the tablet, go to
+Open **BioCap** on the watch and tap **Start**. On the tablet, go to
 **Sensors → Galaxy Watch** and confirm live readings (HR / EDA / battery) appear.
 
 ---

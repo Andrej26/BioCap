@@ -15,7 +15,7 @@ Server ⇄ ws://client:9090 ⇄ Client          Server ⇄ direct UDP ⇄ Client
 ```
 
 This guide is **self-contained**: follow it in a fresh app. It uses plain Android + coroutines; it does
-**not** require Hilt, Room, or any class specific to VitalWork. Where VitalWork uses a helper
+**not** require Hilt, Room, or any class specific to BioCap. Where BioCap uses a helper
 (`KeepAliveCoordinator`, `BackgroundConnectionService`), this guide gives the minimal generic version.
 
 For the deeper reference, see [webrtc_screen_share.md](webrtc_screen_share.md) and
@@ -355,7 +355,7 @@ class ScreenShareService : Service() {
 > projection call and it **demotes/recreates** the foreground service without the `mediaProjection`
 > type, capture throws *"Media projections require a foreground service of type …
 > MEDIA_PROJECTION"*. Keep the service promoted **with that type** continuously until capture is running.
-> In VitalWork this meant splitting cleanup into `disposeResources()` (no demotion) vs full `teardown()`
+> In BioCap this meant splitting cleanup into `disposeResources()` (no demotion) vs full `teardown()`
 > — see [webrtc_screen_share.md](webrtc_screen_share.md#android-mediaprojection--foreground-service-the-critical-part).
 
 ---
