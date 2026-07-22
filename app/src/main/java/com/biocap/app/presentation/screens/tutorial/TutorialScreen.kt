@@ -259,7 +259,7 @@ private fun phaseAccentColor(phase: SlidePhase): Color = when (phase) {
 @Composable
 fun TutorialScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToSessions: () -> Unit,
+    onStartSession: () -> Unit,
     viewModel: TutorialViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -404,7 +404,7 @@ fun TutorialScreen(
                             enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                         }
                     )
-                    SlideType.COMPLETE -> TutorialCompleteStep(onGoToTests = onNavigateToSessions)
+                    SlideType.COMPLETE -> TutorialCompleteStep(onGoToSessions = onStartSession)
                 }
             }
 
@@ -1448,7 +1448,7 @@ private fun WatchStatusCard(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun TutorialCompleteStep(onGoToTests: () -> Unit) {
+private fun TutorialCompleteStep(onGoToSessions: () -> Unit) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val pad = if (maxWidth < 600.dp) 16.dp else 24.dp
         Column(
@@ -1485,12 +1485,12 @@ private fun TutorialCompleteStep(onGoToTests: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                onClick = onGoToTests,
+                onClick = onGoToSessions,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Go to Tests")
+                Text("Go to Sessions")
             }
 
             Text(

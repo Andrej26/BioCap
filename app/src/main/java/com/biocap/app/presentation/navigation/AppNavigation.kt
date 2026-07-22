@@ -111,8 +111,10 @@ fun AppNavigation(
         composable(Route.Tutorial.route) {
             TutorialScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateToSessions = {
-                    navController.navigate(Route.Sessions.route) {
+                // Finishing the tutorial starts a brand-new session: go to participant entry, which
+                // creates the participant + session and flows into setup → the scenario hub.
+                onStartSession = {
+                    navController.navigate(Route.ParticipantEntry.route) {
                         popUpTo(Route.Home.route)
                     }
                 }

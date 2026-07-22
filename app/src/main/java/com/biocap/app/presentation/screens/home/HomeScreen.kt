@@ -1,13 +1,19 @@
 ﻿package com.biocap.app.presentation.screens.home
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
@@ -17,6 +23,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -31,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -74,6 +82,8 @@ fun HomeScreen(
     val linkConnectionState by viewModel.linkConnectionState.collectAsState()
     val linkActiveRole by viewModel.linkActiveRole.collectAsState()
     val deviceMode by viewModel.deviceMode.collectAsState()
+    val connectedSensorCount by viewModel.connectedSensorCount.collectAsState()
+    val devicePrefix by viewModel.devicePrefix.collectAsState()
 
     val context = LocalContext.current
 
@@ -140,27 +150,43 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
-        Box(
+        val currentActive = activeSession
+        val isServer = deviceMode == PeerRole.SERVER
+
+        // While a session is active, tick once a second so the button shows live elapsed time.
+        var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
+        LaunchedEffect(currentActive?.id) {
+            if (currentActive != null) {
+                while (true) {
+                    nowMs = System.currentTimeMillis()
+                    delay(1000L)
+                }
+            }
+        }
+        val elapsedLabel = currentActive?.let { formatElapsed(nowMs - it.startedAt) }
+
+        // A link runs in one role at a time: show the live status dot on that role's button,
+        // gray on the other. Same gray/green indicator the sensors use.
+        val serverDotColor = connectionStatusColor(
+            if (linkActiveRole == PeerRole.SERVER) linkConnectionState else ConnectionState.DISCONNECTED
+        )
+        val clientDotColor = connectionStatusColor(
+            if (linkActiveRole == PeerRole.CLIENT) linkConnectionState else ConnectionState.DISCONNECTED
+        )
+
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .verticalScroll(rememberScrollState()),
-            contentAlignment = Alignment.Center
         ) {
-            val currentActive = activeSession
-
-            // While a session is active, tick once a second so the button shows live elapsed time.
-            var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
-            LaunchedEffect(currentActive?.id) {
-                if (currentActive != null) {
-                    while (true) {
-                        nowMs = System.currentTimeMillis()
-                        delay(1000L)
-                    }
-                }
-            }
-            val elapsedLabel = currentActive?.let { formatElapsed(nowMs - it.startedAt) }
-
+            // ── Scrollable content zone (warnings + action buttons + nav) ──
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                contentAlignment = Alignment.Center
+            ) {
             Column(
                 modifier = Modifier
                     .widthIn(max = 560.dp)
@@ -176,15 +202,6 @@ fun HomeScreen(
                 WatchBatteryWarningCard(
                     alert = watchBatteryAlert,
                     level = watchBatteryLevel
-                )
-
-                // A link runs in one role at a time: show the live status dot on that role's button,
-                // gray on the other. Same gray/green indicator the sensors use.
-                val serverDotColor = connectionStatusColor(
-                    if (linkActiveRole == PeerRole.SERVER) linkConnectionState else ConnectionState.DISCONNECTED
-                )
-                val clientDotColor = connectionStatusColor(
-                    if (linkActiveRole == PeerRole.CLIENT) linkConnectionState else ConnectionState.DISCONNECTED
                 )
 
                 // Server mode is intentionally bare: the host device only ever needs to start
@@ -262,6 +279,112 @@ fun HomeScreen(
                     )
                 }
             }
+            }
+
+            // ── Footer: status card anchored to the bottom edge ──
+            // Status at a glance: readiness / link state on the left, device mode + prefix on the
+            // right (the prefix matters when several prefixed tablets test in parallel).
+            val statusText: String
+            val statusDot: Color
+            when {
+                isServer -> {
+                    val serverState = if (linkActiveRole == PeerRole.SERVER) linkConnectionState
+                        else ConnectionState.DISCONNECTED
+                    when (serverState) {
+                        ConnectionState.CONNECTED -> {
+                            statusText = "Monitored device connected"
+                            statusDot = StatusGreen
+                        }
+                        ConnectionState.CONNECTING, ConnectionState.RECONNECTING -> {
+                            statusText = "Connecting…"
+                            statusDot = StatusAmber
+                        }
+                        else -> {
+                            statusText = "Waiting for monitored device"
+                            statusDot = serverDotColor
+                        }
+                    }
+                }
+                currentActive != null -> {
+                    statusText = "Session in progress — ${currentActive.sessionCode}"
+                    statusDot = ActiveSessionOrange
+                }
+                missingPrerequisites.isNotEmpty() -> {
+                    statusText = "Setup needed — see warnings above"
+                    statusDot = StatusAmber
+                }
+                connectedSensorCount == 0 -> {
+                    statusText = "No sensors connected"
+                    statusDot = MaterialTheme.colorScheme.outline
+                }
+                else -> {
+                    statusText = if (connectedSensorCount == 1) "1 sensor connected"
+                        else "$connectedSensorCount sensors connected"
+                    statusDot = StatusGreen
+                }
+            }
+            HomeStatusCard(
+                text = statusText,
+                dotColor = statusDot,
+                modeLabel = "${if (isServer) "Server" else "Client"} · $devicePrefix",
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .widthIn(max = 560.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Bottom status card (the footer): a status dot + text on the left, and the device mode + prefix
+ * chip on the right. Kept deliberately plain — a bordered rounded card with standard typography.
+ */
+@Composable
+private fun HomeStatusCard(
+    text: String,
+    dotColor: Color,
+    modeLabel: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+        modifier = modifier
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 11.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(dotColor)
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f)
+            )
+            Surface(
+                shape = RoundedCornerShape(999.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer
+            ) {
+                Text(
+                    text = modeLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)
+                )
+            }
         }
     }
 }
@@ -269,6 +392,10 @@ fun HomeScreen(
 /** Amber/orange used to make an in-progress session stand out — matches the ACTIVE accent
  *  already used in [com.biocap.app.presentation.screens.sessions.components.ActiveSessionBanner]. */
 private val ActiveSessionOrange = Color(0xFFCC8A52)
+
+/** Status-dot colors, matching the app's connection indicators (see connectionStatusColor). */
+private val StatusGreen = Color(0xFF4CAF50)
+private val StatusAmber = Color(0xFFFFA000)
 
 /** Formats an elapsed duration as H:MM:SS (or M:SS under an hour). */
 private fun formatElapsed(elapsedMs: Long): String {
