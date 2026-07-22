@@ -25,6 +25,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "VitalWork"
+rootProject.name = "BioCap"
 include(":app")
 include(":wear")

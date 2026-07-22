@@ -15,7 +15,7 @@ Server ⇄ ws://client:9090 ⇄ Client          Server ⇄ direct UDP ⇄ Client
 ```
 
 This guide is **self-contained**: follow it in a fresh app. It uses plain Android + coroutines; it does
-**not** require Hilt, Room, or any class specific to VitalWork. Where VitalWork uses a helper
+**not** require Hilt, Room, or any class specific to BioCap. Where BioCap uses a helper
 (`KeepAliveCoordinator`, `BackgroundConnectionService`), this guide gives the minimal generic version.
 
 For the deeper reference, see [webrtc_screen_share.md](webrtc_screen_share.md) and
@@ -108,7 +108,7 @@ data class PeerMessage(
 
 You need a tiny duplex channel that: (a) lets the server send `request_screen`, and (b) delivers each
 incoming `PeerMessage` to a callback. Below is the essence (full version:
-[PeerLinkManagerImpl.kt](../app/src/main/java/com/vitalwork/app/data/link/PeerLinkManagerImpl.kt)).
+[PeerLinkManagerImpl.kt](../app/src/main/java/com/biocap/app/data/link/PeerLinkManagerImpl.kt)).
 
 **Server** (run on the operator device):
 
@@ -150,7 +150,7 @@ client.connect()
 ```
 
 > **How does the client get `serverIp`?** Either type it (the server can show its own IP — see
-> `LanAddress.localIpv4()` in [LanAddress.kt](../app/src/main/java/com/vitalwork/app/data/link/LanAddress.kt),
+> `LanAddress.localIpv4()` in [LanAddress.kt](../app/src/main/java/com/biocap/app/data/link/LanAddress.kt),
 > a one-method UDP trick), or auto-discover it with mDNS ([mdns_discovery.md](mdns_discovery.md)).
 
 > **Threading:** Java-WebSocket calls these callbacks on its own threads. Don't touch UI directly from
@@ -355,7 +355,7 @@ class ScreenShareService : Service() {
 > projection call and it **demotes/recreates** the foreground service without the `mediaProjection`
 > type, capture throws *"Media projections require a foreground service of type …
 > MEDIA_PROJECTION"*. Keep the service promoted **with that type** continuously until capture is running.
-> In VitalWork this meant splitting cleanup into `disposeResources()` (no demotion) vs full `teardown()`
+> In BioCap this meant splitting cleanup into `disposeResources()` (no demotion) vs full `teardown()`
 > — see [webrtc_screen_share.md](webrtc_screen_share.md#android-mediaprojection--foreground-service-the-critical-part).
 
 ---

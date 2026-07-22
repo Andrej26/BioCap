@@ -187,13 +187,13 @@ Wi-Fi this is typically smooth and low-latency.
 
 | File | Role |
 |------|------|
-| [data/webrtc/WebRtcEngine.kt](../app/src/main/java/com/vitalwork/app/data/webrtc/WebRtcEngine.kt) | Process-wide `EglBase` + lazy `PeerConnectionFactory` (`@Singleton`) |
-| [data/webrtc/ScreenShareController.kt](../app/src/main/java/com/vitalwork/app/data/webrtc/ScreenShareController.kt) | Drives the session: request/offer/answer/ICE, capture, render handoff, teardown |
-| [data/webrtc/model/ShareState.kt](../app/src/main/java/com/vitalwork/app/data/webrtc/model/ShareState.kt) | `ShareState` enum |
-| [service/BackgroundConnectionService.kt](../app/src/main/java/com/vitalwork/app/service/BackgroundConnectionService.kt) | Promotes to a `mediaProjection` FGS, then calls `beginCapture` |
-| [.../screens/link/PeerLinkViewModel.kt](../app/src/main/java/com/vitalwork/app/presentation/screens/link/PeerLinkViewModel.kt) | Bridges UI ↔ controller; launches consent |
-| [.../screens/link/PeerLinkScreen.kt](../app/src/main/java/com/vitalwork/app/presentation/screens/link/PeerLinkScreen.kt) | Consent launcher + `SurfaceViewRenderer` (the "Screen monitor" card) |
-| [data/link/model/PeerMessage.kt](../app/src/main/java/com/vitalwork/app/data/link/model/PeerMessage.kt) | Signaling envelope (shared with the link) |
+| [data/webrtc/WebRtcEngine.kt](../app/src/main/java/com/biocap/app/data/webrtc/WebRtcEngine.kt) | Process-wide `EglBase` + lazy `PeerConnectionFactory` (`@Singleton`) |
+| [data/webrtc/ScreenShareController.kt](../app/src/main/java/com/biocap/app/data/webrtc/ScreenShareController.kt) | Drives the session: request/offer/answer/ICE, capture, render handoff, teardown |
+| [data/webrtc/model/ShareState.kt](../app/src/main/java/com/biocap/app/data/webrtc/model/ShareState.kt) | `ShareState` enum |
+| [service/BackgroundConnectionService.kt](../app/src/main/java/com/biocap/app/service/BackgroundConnectionService.kt) | Promotes to a `mediaProjection` FGS, then calls `beginCapture` |
+| [.../screens/link/PeerLinkViewModel.kt](../app/src/main/java/com/biocap/app/presentation/screens/link/PeerLinkViewModel.kt) | Bridges UI ↔ controller; launches consent |
+| [.../screens/link/PeerLinkScreen.kt](../app/src/main/java/com/biocap/app/presentation/screens/link/PeerLinkScreen.kt) | Consent launcher + `SurfaceViewRenderer` (the "Screen monitor" card) |
+| [data/link/model/PeerMessage.kt](../app/src/main/java/com/biocap/app/data/link/model/PeerMessage.kt) | Signaling envelope (shared with the link) |
 
 ### Threading
 
@@ -214,7 +214,7 @@ All session mutations run on a single-worker scope
 Android **stops compositing a display that is truly powered off**, so `MediaProjection` produces no
 frames once the sharer's screen sleeps — the operator would see a frozen/black image. There is no API
 to capture an off display. The workaround keeps the sharer's display technically **on** while making
-it *look* off ([ScreenDimController](../app/src/main/java/com/vitalwork/app/service/ScreenDimController.kt)):
+it *look* off ([ScreenDimController](../app/src/main/java/com/biocap/app/service/ScreenDimController.kt)):
 
 1. A **`SCREEN_DIM_WAKE_LOCK`** held by `BackgroundConnectionService` keeps the screen rendering
    regardless of which app is in the foreground (a window `KEEP_SCREEN_ON` flag only works while *our*

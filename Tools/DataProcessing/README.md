@@ -1,6 +1,6 @@
 # DataProcessing
 
-Basic visualization of exported VitalWork session data.
+Basic visualization of exported BioCap session data.
 
 ## Setup
 

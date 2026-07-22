@@ -4,9 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-VitalWork is an Android mobile application written in Kotlin using Jetpack Compose. It is the **operator-side app** for a research study monitoring **operator physiological state during simulated work scenarios**. The tablet/phone captures physiological data (heart rate, RR/IBI intervals, respiration, EDA) from BLE / audio-jack / Galaxy Watch sensors during each of five biofeedback scenarios (A–E), and uploads the bundled dataset (participant + session + scenarios + samples) to the VitalWork server at session end. A second device can pair over local Wi-Fi (device-to-device link) so the operator watches the monitored device's live screen. (The former VR/reaction-time phase — Meta Quest link, Ktor HTTP server, UDP beacon — was removed in the biofeedback pivot; see DB history v5/v6.)
+BioCap is an Android mobile application written in Kotlin using Jetpack Compose. It is the **operator-side app** for a research study monitoring **operator physiological state during simulated work scenarios**. The tablet/phone captures physiological data (heart rate, RR/IBI intervals, respiration, EDA) from BLE / audio-jack / Galaxy Watch sensors during each of five biofeedback scenarios (A–E), and uploads the bundled dataset (participant + session + scenarios + samples) to the VitalWork server at session end. A second device can pair over local Wi-Fi (device-to-device link) so the operator watches the monitored device's live screen. (The former VR/reaction-time phase — Meta Quest link, Ktor HTTP server, UDP beacon — was removed in the biofeedback pivot; see DB history v5/v6.)
 
-**Package:** `com.vitalwork.app`
+> **Provenance:** BioCap is an independent fork of the VitalWork codebase (2026-07). The two apps
+> are fully separate (different `applicationId`, network identifiers, and branding — they cannot
+> pair with each other), but **both upload to the same VitalWork server** by design. Session codes
+> minted by BioCap use the `BC-` prefix (VitalWork uses `VW-`), so the server can tell them apart.
+
+**Package:** `com.biocap.app`
 
 **Tech Stack:**
 - Kotlin 2.3.0 with Jetpack Compose (BOM 2026.01.00)
@@ -27,7 +32,7 @@ VitalWork is an Android mobile application written in Kotlin using Jetpack Compo
 # Build (requires JDK 17+; Android Studio's bundled JBR works)
 ./gradlew build                    # Full build
 ./gradlew assembleDebug            # Debug APK only
-./gradlew bundleRelease            # Signed release AAB (uses keystore from local.properties)
+./gradlew bundleRelease            # Release AAB (unsigned unless a keystore is configured — see Release Signing)
 
 # Per-module (two modules: :app tablet, :wear watch)
 ./gradlew :app:assembleDebug       # Tablet/phone APK
@@ -53,8 +58,8 @@ VitalWork is an Android mobile application written in Kotlin using Jetpack Compo
 
 ```
 MainActivity (entry point)
-└── VitalWorkApplication (Hilt application class)
-    └── VitalWorkTheme (Material 3 theme wrapper)
+└── BioCapApplication (Hilt application class)
+    └── BioCapTheme (Material 3 theme wrapper)
         └── AppNavigation (NavHost)
             └── Composable screens
 ```
@@ -88,14 +93,35 @@ The app has three main responsibilities:
 **Dependency Management:** All versions and dependencies are centralized in `gradle/libs.versions.toml`. Add new dependencies there first, then reference them in `app/build.gradle.kts` using the `libs.` accessor.
 
 **App Configuration (`app/build.gradle.kts`):**
-- Application ID: `com.vitalwork.app`
+- Application ID: `com.biocap.app`
 - Min SDK 24, Target/Compile SDK 36
 - Java 11 compatibility
 - Compose build feature enabled
-- Release signing configured via `local.properties` (KEYSTORE_PATH, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD)
+- Release signing is optional and reads from `local.properties` (see **Release Signing** below)
 
 **Local SDKs (`app/libs/`):**
 - `eSense_sdk_2_lib.jar` — eSense Respiration sensor SDK
+
+## Release Signing (not set up yet — by design)
+
+**No release keystore exists for BioCap.** Development and testing run on debug builds
+(`installDebug`), which Android signs with the machine-local auto-generated debug key; nothing more
+is needed for day-to-day work. The release build type is null-safe: without keystore entries in
+`local.properties` the release artifact is simply unsigned (nothing fails).
+
+When the app is to be published (Google Play or signed APK distribution), the publishing company
+should:
+
+1. Generate its own keystore (`keytool -genkeypair ...`) and keep it **outside the repository** —
+   the keystore controls all future updates of the app and must not be lost or shared.
+2. Add to `local.properties` (never committed): `KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`,
+   `KEY_PASSWORD` — `app/build.gradle.kts` picks them up automatically.
+3. Prefer **Play App Signing** in the Play Console (Google holds the production key; the keystore
+   above becomes the upload key), which also covers key-loss recovery.
+
+**Important:** the `:app` and `:wear` APKs must be signed with the **same key** — the Wearable Data
+Layer refuses to link phone and watch apps with mismatched signatures (debug builds already satisfy
+this automatically on a single machine).
 
 ## Git Workflow
 
@@ -167,9 +193,9 @@ Docs (in [doc/](doc/)): [peer_link_websocket.md](doc/peer_link_websocket.md) (li
 ## Package Structure
 
 ```
-com.vitalwork.app/
+com.biocap.app/
 ├── MainActivity.kt
-├── VitalWorkApplication.kt        # Hilt application class
+├── BioCapApplication.kt        # Hilt application class
 ├── di/
 │   └── AppModule.kt                        # Hilt dependency injection module
 ├── data/
@@ -342,16 +368,16 @@ com.vitalwork.app/
     └── Type.kt
 ```
 
-**`:wear` module** (`com.vitalwork.wear`):
+**`:wear` module** (`com.biocap.wear`):
 
 ```
-com.vitalwork.wear/
+com.biocap.wear/
 ├── MainActivity.kt           # Minimal Start/Stop watch UI + runtime permission requests
 ├── WatchSensorService.kt          # Foreground health service; owns the Samsung SDK, flush() loop, heartbeat; emit() persists to store + streams
 ├── WatchSampleStore.kt            # Append-only JSON-lines durable store; truncate-after-ack (store-and-forward)
 ├── WatchCommandListenerService.kt # WearableListenerService; handles START/FLUSH/STOP/FLUSH_ACK from the phone
 ├── WatchFlushWriter.kt            # Pushes stored rows to the phone as chunked DataClient DataItems
-├── WatchDataSender.kt             # MessageClient sender; resolves/caches the vitalwork_phone node
+├── WatchDataSender.kt             # MessageClient sender; resolves/caches the biocap_phone node
 └── WatchMessage.kt                # Builds JSON lines (reading, capabilities, batch, stop, heartbeat)
 ```
 
@@ -409,7 +435,7 @@ in the DB and sent to the server, so the descriptive labels can change without b
 Session duration is derived from `endedAt − startedAt`. All timestamps come from an NTP-corrected
 clock (`TimeProvider`) on the same UTC timeline, so cross-stream alignment needs no clock-sync.
 
-**Device prefix (multi-tablet testing):** each tablet picks a one-time prefix (A/B/C/D) under **Settings** (`SettingsRepository`, SharedPreferences, default `A`). The prefix tags both the generated participant code (`A-001`) and session code (`VW-A-yyMMdd-HHmmss`), so several tablets testing in parallel never mint colliding codes that would look like one duplicated participant after the server merge. The participant-code field is read-only (auto-generated) to keep the scheme typo-proof; participant numbering is counted **per prefix** (`ParticipantDao.getParticipantCountByPrefix`). Operators must agree beforehand which device owns which letter — collisions are only prevented across devices with *distinct* letters.
+**Device prefix (multi-tablet testing):** each tablet picks a one-time prefix (A/B/C/D) under **Settings** (`SettingsRepository`, SharedPreferences, default `A`). The prefix tags both the generated participant code (`A-001`) and session code (`BC-A-yyMMdd-HHmmss`), so several tablets testing in parallel never mint colliding codes that would look like one duplicated participant after the server merge. The participant-code field is read-only (auto-generated) to keep the scheme typo-proof; participant numbering is counted **per prefix** (`ParticipantDao.getParticipantCountByPrefix`). Operators must agree beforehand which device owns which letter — collisions are only prevented across devices with *distinct* letters.
 
 ## Data Flow
 
@@ -482,7 +508,7 @@ Unit tests live under `app/src/test/` and run on the host JVM (no device/emulato
 | `data/recording/WatchSessionDrainerTest.kt` | `WatchSessionDrainer.kt` | Per-(scenario,type) timestamp-window attribution + de-dup for EDA/HR/IBI; gap/boundary/back-to-back rules |
 | `data/recording/WatchReconciliationReportTest.kt` | `WatchReconciliationReport.kt` | ok/mismatch verdict + summary formatting |
 | `data/repository/ParticipantRepositoryTest.kt` | `ParticipantRepository.kt` | Code generation (`A-001`…, per-device-prefix scoped), uniqueness validation, fetch by ID/code |
-| `data/repository/SessionRepositoryTest.kt` | `SessionRepository.kt` | Session lifecycle: `sessionCode` format (VW-{prefix}-yyMMdd-HHmmss), participant FK, sample-count aggregation from scenarios at end, status transitions, deletion |
+| `data/repository/SessionRepositoryTest.kt` | `SessionRepository.kt` | Session lifecycle: `sessionCode` format (BC-{prefix}-yyMMdd-HHmmss), participant FK, sample-count aggregation from scenarios at end, status transitions, deletion |
 | `data/repository/ScenarioRepositoryTest.kt` | `ScenarioRepository.kt` | Scenario lifecycle: create, end (sets `endedAt`), close dangling scenarios, batch sample insert |
 | `data/export/SessionExportMapperTest.kt` | `SessionExportMapper.kt` | Export data transformation: participant + session + scenarios + samples; sensor type mapping, gap detection per scenario, statistics counted from exported samples, UTC timestamps |
 | `data/export/upload/SessionUploadMapperTest.kt` | `SessionUploadMapper.kt` | Upload DTO mapping: epoch-ms timestamps, enum-name sensor/scenario codes, statistics counted from uploaded samples |

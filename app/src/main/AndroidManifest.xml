@@ -60,7 +60,7 @@
         android:required="false" />
 
     <application
-        android:name=".VitalWorkApplication"
+        android:name=".BioCapApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -69,11 +69,11 @@
         android:networkSecurityConfig="@xml/network_security_config"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.VitalWork">
+        android:theme="@style/Theme.BioCap">
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.VitalWork">
+            android:theme="@style/Theme.BioCap">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -99,14 +99,14 @@
                 <data
                     android:scheme="wear"
                     android:host="*"
-                    android:pathPrefix="/vitalwork/sensors" />
+                    android:pathPrefix="/biocap/sensors" />
             </intent-filter>
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <data
                     android:scheme="wear"
                     android:host="*"
-                    android:pathPrefix="/vitalwork/flush" />
+                    android:pathPrefix="/biocap/flush" />
             </intent-filter>
         </service>
     </application>

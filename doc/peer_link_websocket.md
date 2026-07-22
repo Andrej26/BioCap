@@ -2,7 +2,7 @@
 
 ## Overview
 
-The peer link is a direct device-to-device channel between two VitalWork tablets/phones on the same
+The peer link is a direct device-to-device channel between two BioCap tablets/phones on the same
 Wi-Fi network. One device runs as the **server** (host) and the other as the **client**; once paired
 they exchange small JSON messages over a single WebSocket. The link is used for two things:
 
@@ -72,9 +72,9 @@ Signaling fields default to `null` so legacy `hello`/`log` messages (and their t
 
 | Constant | Value |
 |----------|-------|
-| Register service type | `_vitalwork._tcp` |
-| Discover service type | `_vitalwork._tcp.` |
-| Advertised name | `VitalWork-{Build.MODEL}` (spaces → `-`) |
+| Register service type | `_biocap._tcp` |
+| Discover service type | `_biocap._tcp.` |
+| Advertised name | `BioCap-{Build.MODEL}` (spaces → `-`) |
 
 The server calls `register(deviceName, PORT)`; the client calls `startDiscovery()` and resolved peers
 appear as `PeerDevice(name, host, port)` in `discoveredDevices`. Requires the
@@ -155,15 +155,15 @@ backgrounded socket and detects a dead peer (→ `onClose` → teardown).
 
 | File | Role |
 |------|------|
-| [data/link/PeerLinkManager.kt](../app/src/main/java/com/vitalwork/app/data/link/PeerLinkManager.kt) | Interface — the single source of truth for the link |
-| [data/link/PeerLinkManagerImpl.kt](../app/src/main/java/com/vitalwork/app/data/link/PeerLinkManagerImpl.kt) | Java-WebSocket server + client implementation |
-| [data/link/PeerMdnsService.kt](../app/src/main/java/com/vitalwork/app/data/link/PeerMdnsService.kt) | mDNS register/discover via `NsdManager` |
-| [data/link/LanAddress.kt](../app/src/main/java/com/vitalwork/app/data/link/LanAddress.kt) | Local IPv4 resolution for the advertised label |
-| [data/link/PeerRole.kt](../app/src/main/java/com/vitalwork/app/data/link/PeerRole.kt) | `enum PeerRole { SERVER, CLIENT }` |
-| [data/link/model/PeerMessage.kt](../app/src/main/java/com/vitalwork/app/data/link/model/PeerMessage.kt) | Wire envelope (pairing + signaling) |
-| [data/link/model/PeerDevice.kt](../app/src/main/java/com/vitalwork/app/data/link/model/PeerDevice.kt) | Resolved peer (name/host/port) |
-| [.../screens/link/PeerLinkViewModel.kt](../app/src/main/java/com/vitalwork/app/presentation/screens/link/PeerLinkViewModel.kt) | UI state + role selection |
-| [.../screens/link/PeerLinkScreen.kt](../app/src/main/java/com/vitalwork/app/presentation/screens/link/PeerLinkScreen.kt) | Compose UI (status, discovered peers, log, screen monitor) |
+| [data/link/PeerLinkManager.kt](../app/src/main/java/com/biocap/app/data/link/PeerLinkManager.kt) | Interface — the single source of truth for the link |
+| [data/link/PeerLinkManagerImpl.kt](../app/src/main/java/com/biocap/app/data/link/PeerLinkManagerImpl.kt) | Java-WebSocket server + client implementation |
+| [data/link/PeerMdnsService.kt](../app/src/main/java/com/biocap/app/data/link/PeerMdnsService.kt) | mDNS register/discover via `NsdManager` |
+| [data/link/LanAddress.kt](../app/src/main/java/com/biocap/app/data/link/LanAddress.kt) | Local IPv4 resolution for the advertised label |
+| [data/link/PeerRole.kt](../app/src/main/java/com/biocap/app/data/link/PeerRole.kt) | `enum PeerRole { SERVER, CLIENT }` |
+| [data/link/model/PeerMessage.kt](../app/src/main/java/com/biocap/app/data/link/model/PeerMessage.kt) | Wire envelope (pairing + signaling) |
+| [data/link/model/PeerDevice.kt](../app/src/main/java/com/biocap/app/data/link/model/PeerDevice.kt) | Resolved peer (name/host/port) |
+| [.../screens/link/PeerLinkViewModel.kt](../app/src/main/java/com/biocap/app/presentation/screens/link/PeerLinkViewModel.kt) | UI state + role selection |
+| [.../screens/link/PeerLinkScreen.kt](../app/src/main/java/com/biocap/app/presentation/screens/link/PeerLinkScreen.kt) | Compose UI (status, discovered peers, log, screen monitor) |
 
 ### Data Flow
 
