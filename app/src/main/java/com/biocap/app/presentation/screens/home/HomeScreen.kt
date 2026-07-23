@@ -1,13 +1,17 @@
 ﻿package com.biocap.app.presentation.screens.home
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -20,13 +24,13 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.filled.WifiFind
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import com.biocap.app.R
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -43,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
@@ -136,19 +141,7 @@ fun HomeScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "BioCap Operator",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         val currentActive = activeSession
         val isServer = deviceMode == PeerRole.SERVER
@@ -192,8 +185,15 @@ fun HomeScreen(
                     .widthIn(max = 560.dp)
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(11.dp)
             ) {
+                // ── Centered logo header (replaces the old TopAppBar). The logo carries the
+                //    identity; a small uppercase caption states the mode + readiness. ──
+                LogoHeader(
+                    caption = if (isServer) "Monitoring Station" else "Operator Console",
+                    modifier = Modifier.padding(top = 12.dp, bottom = 6.dp)
+                )
+
                 ReadinessWarningCard(
                     missing = missingPrerequisites,
                     onFix = onFix
@@ -208,26 +208,35 @@ fun HomeScreen(
                 // hosting, so we show just "Connect as Server" (+ Settings, which hosts the
                 // device-mode switch).
                 if (deviceMode == PeerRole.SERVER) {
+                    // Server's single action uses the navy primary card so it reads as the focus.
                     PrimaryActionButton(
                         title = "Connect as Server",
-                        subtitle = "Host the device link (other device connects)",
+                        subtitle = "Host the device link",
                         onClick = onNavigateToLinkServer,
                         icon = Icons.Default.Wifi,
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        subtitleColor = OnNavyMuted,
+                        iconBadgeColor = MaterialTheme.colorScheme.tertiary,
+                        iconColor = MaterialTheme.colorScheme.primary,
                         trailingDotColor = serverDotColor
                     )
                 } else {
                     // Client mode (and the unpicked state) shows the full operator home, minus the
-                    // "Connect as Server" button.
+                    // "Connect as Server" button. The primary action is the navy card; an active
+                    // session flips it to the orange "Resume" state.
+                    val sessionActive = currentActive != null
                     PrimaryActionButton(
-                        title = if (currentActive != null) "Resume Active Session" else "Start New Session",
-                        subtitle = elapsedLabel,
+                        title = if (sessionActive) "Resume Active Session" else "Start New Session",
+                        subtitle = elapsedLabel ?: "New participant · scenarios A–E",
                         enabled = !isStarting,
-                        containerColor = if (currentActive != null) ActiveSessionOrange
+                        containerColor = if (sessionActive) ActiveSessionOrange
                             else MaterialTheme.colorScheme.primary,
-                        contentColor = if (currentActive != null) Color.White
+                        contentColor = if (sessionActive) Color.White
                             else MaterialTheme.colorScheme.onPrimary,
+                        subtitleColor = if (sessionActive) Color.White.copy(alpha = 0.85f) else OnNavyMuted,
+                        iconBadgeColor = MaterialTheme.colorScheme.tertiary,
+                        iconColor = MaterialTheme.colorScheme.primary,
                         onClick = {
                             if (currentActive != null) {
                                 onNavigateToSessionActive(currentActive.id)
@@ -241,13 +250,15 @@ fun HomeScreen(
                     )
 
                     if (deviceMode == PeerRole.CLIENT) {
+                        // Secondary cards: white on the ivory ground, gold-tinted icon badge.
                         PrimaryActionButton(
                             title = "Connect as Client",
                             subtitle = "Find and connect to a hosting device",
                             onClick = onNavigateToLinkClient,
                             icon = Icons.Default.WifiFind,
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                             trailingDotColor = clientDotColor
                         )
                     }
@@ -257,12 +268,13 @@ fun HomeScreen(
                         subtitle = "Browse and export past sessions",
                         onClick = onNavigateToSessions,
                         icon = Icons.Default.Folder,
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                     )
                 }
 
-                HorizontalDivider()
+                Spacer(modifier = Modifier.height(2.dp))
 
                 // Sensors/Tutorial are operator-only; Settings is shown in both modes — it carries
                 // the device prefix (A–D) that scopes the link to one pair, and the device-mode
@@ -389,13 +401,47 @@ private fun HomeStatusCard(
     }
 }
 
-/** Amber/orange used to make an in-progress session stand out — matches the ACTIVE accent
- *  already used in [com.biocap.app.presentation.screens.sessions.components.ActiveSessionBanner]. */
-private val ActiveSessionOrange = Color(0xFFCC8A52)
+/**
+ * The centered brand header: the BioCap logo above a small uppercase caption. Replaces the old
+ * "BioCap Operator" TopAppBar — the logo now carries the identity, per the Parchment design.
+ */
+@Composable
+private fun LogoHeader(
+    caption: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.biocap_logo),
+            contentDescription = "BioCap",
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 148.dp)
+        )
+        Text(
+            text = caption.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 2.sp,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 2.dp)
+        )
+    }
+}
 
-/** Status-dot colors, matching the app's connection indicators (see connectionStatusColor). */
-private val StatusGreen = Color(0xFF4CAF50)
-private val StatusAmber = Color(0xFFFFA000)
+/** Muted text tone for subtitles on the navy primary card. */
+private val OnNavyMuted = Color(0xFFB7BDCF)
+
+/** In-progress session accent + status-dot colors come from the shared palette (Color.kt):
+ *  [com.biocap.app.ui.theme.ActiveOrange], [com.biocap.app.ui.theme.StatusGreen],
+ *  [com.biocap.app.ui.theme.WarningAmber]. Aliased locally to keep the call sites terse. */
+private val ActiveSessionOrange = com.biocap.app.ui.theme.ActiveOrange
+private val StatusGreen = com.biocap.app.ui.theme.StatusGreen
+private val StatusAmber = com.biocap.app.ui.theme.WarningAmber
 
 /** Formats an elapsed duration as H:MM:SS (or M:SS under an hour). */
 private fun formatElapsed(elapsedMs: Long): String {
