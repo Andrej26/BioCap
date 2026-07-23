@@ -35,15 +35,18 @@ val CriticalRedInk = Color(0xFFA33830)  // legible red for text on red tints
 val NeutralGray = Color(0xFF9AA0AE)     // disconnected / inactive dots
 val ActiveOrange = Color(0xFFCC8A52)    // in-progress session highlight
 
-// Warm warning-container tones (readiness card: amber-tinted card with white fix rows).
-val WarnContainer = Color(0xFFF7ECD2)
-val WarnBorder = Color(0xFFE5CF94)
-val WarnInk = Color(0xFF4A3F18)
+// Setup-action warning tones (readiness card: red-leaning tinted card with white fix rows).
+// Shifted from amber toward a muted red so required setup actions read as more urgent —
+// still soft enough not to look like a hard error state.
+val WarnContainer = Color(0xFFF6DEDA)
+val WarnBorder = Color(0xFFE0AEA3)
+val WarnInk = Color(0xFF6E241A)
 
-// Soft error tint (tappable error cards like Bluetooth-disabled).
-val ErrorTint = Color(0xFFF6DFD2)
-val ErrorTintBorder = Color(0xFFE7BFA4)
-val ErrorTintInk = Color(0xFF6E3A1C)
+// Soft error tint (tappable error cards like Bluetooth-disabled) — same muted-red family
+// as WarnContainer so setup/error cards read as one consistent "needs attention" language.
+val ErrorTint = Color(0xFFF6DEDA)
+val ErrorTintBorder = Color(0xFFE0AEA3)
+val ErrorTintInk = Color(0xFF6E241A)
 
 // Console (navy diagnostics surface — debug log, connection log).
 val ConsoleNavy = Color(0xFF131B2E)

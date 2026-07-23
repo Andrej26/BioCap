@@ -33,7 +33,6 @@ import androidx.core.content.ContextCompat
 import com.biocap.app.data.system.SessionPrerequisite
 import com.biocap.app.ui.theme.CardBorder
 import com.biocap.app.ui.theme.CardWhite
-import com.biocap.app.ui.theme.GoldInk
 import com.biocap.app.ui.theme.WarnBorder
 import com.biocap.app.ui.theme.WarnContainer
 import com.biocap.app.ui.theme.WarnInk
@@ -108,12 +107,12 @@ fun ReadinessWarningCard(
                             text = "Fix",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
-                            color = GoldInk
+                            color = WarnInk
                         )
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                             contentDescription = null,
-                            tint = GoldInk,
+                            tint = WarnInk,
                             modifier = Modifier.size(20.dp)
                         )
                     }
