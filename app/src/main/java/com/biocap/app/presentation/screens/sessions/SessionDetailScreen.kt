@@ -12,21 +12,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -35,8 +32,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -46,11 +41,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.biocap.app.data.db.SessionStatus
+import com.biocap.app.presentation.components.AppCard
+import com.biocap.app.presentation.components.BioCapTopBar
+import com.biocap.app.presentation.screens.sessions.components.SessionStatusChip
 import com.biocap.app.presentation.screens.sessions.components.UploadProgressDialog
+import com.biocap.app.ui.theme.CriticalRed
+import com.biocap.app.ui.theme.GoldInk
+import com.biocap.app.ui.theme.GoldSoft
+import com.biocap.app.ui.theme.Navy
 import com.biocap.app.util.TimeFormats
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -155,36 +158,8 @@ fun SessionDetailScreen(
     )
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Text(
-                            text = uiState.session?.sessionCode ?: "Session",
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        uiState.session?.status?.let { status ->
-                            StatusBadge(status = status)
-                        }
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         if (uiState.isLoading) {
             Box(
@@ -224,29 +199,30 @@ fun SessionDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+            BioCapTopBar(
+                title = session.sessionCode,
+                subtitle = "${session.scenarioCount} scenario${if (session.scenarioCount != 1) "s" else ""} · all times UTC",
+                onNavigateBack = onNavigateBack,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                actions = { SessionStatusChip(status = session.status) }
+            )
+
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+            AppCard {
                 Column(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "Summary",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    Text(
-                        text = "All times UTC",
-                        style = MaterialTheme.typography.bodySmall,
+                        text = "SUMMARY",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
@@ -265,123 +241,87 @@ fun SessionDetailScreen(
                 }
             }
 
-            Card(
+            // Upload to the VitalWork server. Primary (navy) action; sets status UPLOADED on success.
+            Button(
+                onClick = { viewModel.uploadSession() },
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                )
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Navy,
+                    contentColor = Color.White
+                ),
+                enabled = uiState.uploadState != UploadState.Uploading &&
+                    uiState.scenarios.isNotEmpty()
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Actions",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium
+                Icon(
+                    imageVector = Icons.Default.CloudUpload,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    if (session.status == SessionStatus.UPLOADED) "Re-upload to server"
+                    else "Upload to server",
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // Local offline copy to Documents (gold-ghost). Does NOT change upload status.
+            Button(
+                onClick = {
+                    if (session.status == SessionStatus.UPLOADED) {
+                        showReExportConfirmation = true
+                    } else {
+                        viewModel.exportSession()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = GoldSoft,
+                    contentColor = GoldInk
+                ),
+                enabled = !uiState.isExporting && uiState.scenarios.isNotEmpty()
+            ) {
+                if (uiState.isExporting) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = GoldInk
                     )
-
-                    // Upload to the VitalWork server. Primary action; sets status UPLOADED on success.
-                    Button(
-                        onClick = { viewModel.uploadSession() },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = uiState.uploadState != UploadState.Uploading &&
-                            uiState.scenarios.isNotEmpty()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CloudUpload,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            if (session.status == SessionStatus.UPLOADED) "Re-upload to server"
-                            else "Upload to server"
-                        )
-                    }
-
-                    // Local offline copy to Documents. Does NOT change upload status.
-                    OutlinedButton(
-                        onClick = {
-                            if (session.status == SessionStatus.UPLOADED) {
-                                showReExportConfirmation = true
-                            } else {
-                                viewModel.exportSession()
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !uiState.isExporting && uiState.scenarios.isNotEmpty()
-                    ) {
-                        if (uiState.isExporting) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Export to Documents")
-                    }
-
-                    OutlinedButton(
-                        onClick = { showDeleteConfirmation = true },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        ),
-                        enabled = !uiState.isDeleting
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Delete Session")
-                    }
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Export to Documents", fontWeight = FontWeight.Bold)
+            }
+
+            OutlinedButton(
+                onClick = { showDeleteConfirmation = true },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = CriticalRed
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, CriticalRed.copy(alpha = 0.4f)),
+                enabled = !uiState.isDeleting
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Delete Session", fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+            }
         }
-    }
-}
-
-@Composable
-private fun StatusBadge(status: SessionStatus) {
-    val (backgroundColor, textColor, text) = when (status) {
-        SessionStatus.ACTIVE -> Triple(
-            MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.onPrimaryContainer,
-            "Active"
-        )
-        SessionStatus.COMPLETED -> Triple(
-            MaterialTheme.colorScheme.secondaryContainer,
-            MaterialTheme.colorScheme.onSecondaryContainer,
-            "Completed"
-        )
-        SessionStatus.UPLOADED -> Triple(
-            MaterialTheme.colorScheme.tertiaryContainer,
-            MaterialTheme.colorScheme.onTertiaryContainer,
-            "Uploaded"
-        )
-    }
-
-    Surface(
-        color = backgroundColor,
-        shape = MaterialTheme.shapes.small
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelSmall,
-            color = textColor,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-        )
     }
 }
 

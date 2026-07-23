@@ -1,8 +1,10 @@
 package com.biocap.app.presentation.screens.sessions
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,16 +12,21 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,10 +36,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.biocap.app.data.db.ScenarioCode
+import com.biocap.app.presentation.components.AppCard
+import com.biocap.app.presentation.components.BioCapTopBar
 import com.biocap.app.presentation.screens.sessions.components.EndSessionWatchDialog
+import com.biocap.app.ui.theme.GoldInk
+import com.biocap.app.ui.theme.GoldSoft
+import com.biocap.app.ui.theme.Navy
+import com.biocap.app.ui.theme.StatusGreen
+import com.biocap.app.ui.theme.StatusGreenInk
 
 /**
  * Scenario picker that doubles as the session's home/hub: one vertically-centered button per
@@ -51,9 +67,13 @@ fun ScenarioSelectionScreen(
     viewModel: SessionControlViewModel = hiltViewModel()
 ) {
     val session by viewModel.session.collectAsState()
+    val scenarios by viewModel.scenarios.collectAsState()
     val isEndingSession by viewModel.isEndingSession.collectAsState()
     val endSessionPhase by viewModel.endSessionPhase.collectAsState()
     val watchReconciliation by viewModel.watchReconciliation.collectAsState()
+
+    // A scenario counts as "recorded" once it has an endedAt (a finished run in this session).
+    val recordedCodes = scenarios.filter { it.endedAt != null }.map { it.scenarioCode }.toSet()
 
     var showEndSessionConfirmation by remember { mutableStateOf(false) }
 
@@ -89,67 +109,134 @@ fun ScenarioSelectionScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = session?.sessionCode ?: "Select Scenario",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 24.dp)
         ) {
-            // Five scenario buttons, vertically centered.
+            BioCapTopBar(
+                title = session?.sessionCode ?: "Select Scenario",
+                subtitle = "Pick a scenario to record",
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            )
+
+            // Scrollable scenario cards.
             Column(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .widthIn(max = 480.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(11.dp)
             ) {
-                com.biocap.app.data.db.ScenarioCode.entries.forEachIndexed { index, code ->
-                    Button(
-                        onClick = { onScenarioSelected(index + 1) },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = code.displayName,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
+                ScenarioCode.entries.forEachIndexed { index, code ->
+                    ScenarioCard(
+                        code = code,
+                        recorded = code in recordedCodes,
+                        onClick = { onScenarioSelected(index + 1) }
+                    )
                 }
+                Spacer(Modifier.size(4.dp))
             }
 
-            // End Session & Save, pinned to the bottom of the hub.
+            // End Session & Save, pinned at the bottom as the navy action.
             Button(
                 onClick = { showEndSessionConfirmation = true },
                 enabled = !isEndingSession,
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Navy,
+                    contentColor = Color.White
+                ),
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .widthIn(max = 480.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .widthIn(max = 528.dp)
                     .fillMaxWidth()
-                    .padding(bottom = 24.dp)
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 20.dp)
             ) {
                 if (isEndingSession) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = Color.White
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text("End Session & Save")
+                Text("End Session & Save", fontWeight = FontWeight.Bold)
             }
+        }
+    }
+}
+
+/**
+ * One scenario as a white card: a gold letter badge (A–E), the scenario title (with its "Scenario X –"
+ * prefix stripped so the letter carries the code), and a RECORDED chip once it has a finished run.
+ */
+@Composable
+private fun ScenarioCard(
+    code: ScenarioCode,
+    recorded: Boolean,
+    onClick: () -> Unit
+) {
+    val shortTitle = code.displayName.substringAfter("– ", code.displayName).trim()
+    AppCard(onClick = onClick) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 15.dp, vertical = 13.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Letter badge: the official code A–E in the gold badge.
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(GoldSoft),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = code.officialCode,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = GoldInk
+                )
+            }
+            Spacer(Modifier.width(13.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = shortTitle,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Scenario ${code.officialCode}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (recorded) {
+                Surface(
+                    color = StatusGreen.copy(alpha = 0.16f),
+                    shape = RoundedCornerShape(999.dp)
+                ) {
+                    Text(
+                        text = "RECORDED",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = StatusGreenInk,
+                        modifier = Modifier.padding(horizontal = 9.dp, vertical = 3.dp)
+                    )
+                }
+                Spacer(Modifier.width(8.dp))
+            }
+            Text(
+                text = "›",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+            )
         }
     }
 }

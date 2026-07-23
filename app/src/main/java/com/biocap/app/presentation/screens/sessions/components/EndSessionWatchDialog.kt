@@ -28,7 +28,7 @@ import kotlinx.coroutines.delay
 
 /** Orange used for the "Reconnecting" connection indicator — reused here so the transfer spinner
  *  looks identical to the link-reconnecting animation the operator already knows. */
-private val ReconnectingOrange = Color(0xFFFFA000)
+private val ReconnectingOrange = com.biocap.app.ui.theme.WarningAmber
 
 /** Green used for the upload-complete check (matches UploadProgressDialog). */
 private val SuccessGreen = Color(0xFF2E7D32)

@@ -8,6 +8,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.biocap.app.presentation.components.ConnectionStatusBadge
 import com.biocap.app.data.model.ConnectionState
+import com.biocap.app.ui.theme.CriticalRed
+import com.biocap.app.ui.theme.StatusGreen
+import com.biocap.app.ui.theme.WarningAmber
 
 @Composable
 fun LiveSensorCard(
@@ -69,10 +73,10 @@ fun LiveSensorCard(
             (connectionState == ConnectionState.DISCONNECTED || connectionState == ConnectionState.ERROR)
     val borderColor by animateColorAsState(
         targetValue = when (connectionState) {
-            ConnectionState.CONNECTED -> Color(0xFF4CAF50)
-            ConnectionState.CONNECTING -> Color(0xFFFFA000)
-            ConnectionState.RECONNECTING -> Color(0xFFFFA000)
-            ConnectionState.ERROR -> Color(0xFFF44336)
+            ConnectionState.CONNECTED -> StatusGreen
+            ConnectionState.CONNECTING -> WarningAmber
+            ConnectionState.RECONNECTING -> WarningAmber
+            ConnectionState.ERROR -> CriticalRed
             ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.outlineVariant
         },
         animationSpec = tween(300),
@@ -98,6 +102,7 @@ fun LiveSensorCard(
                     if (isClickable) Modifier.clickable { onClick?.invoke() }
                     else Modifier
                 ),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
             ),

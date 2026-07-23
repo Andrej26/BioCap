@@ -52,8 +52,9 @@ fun UploadProgressDialog(
 
     Dialog(onDismissRequest = { if (state is UploadState.Failed) onContinue() }) {
         Surface(
-            shape = MaterialTheme.shapes.large,
-            color = MaterialTheme.colorScheme.surface
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            border = androidx.compose.foundation.BorderStroke(1.dp, com.biocap.app.ui.theme.CardBorder)
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
@@ -61,16 +62,23 @@ fun UploadProgressDialog(
             ) {
                 when (state) {
                     is UploadState.Uploading -> {
-                        CircularProgressIndicator(modifier = Modifier.size(48.dp))
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(48.dp),
+                            color = com.biocap.app.ui.theme.GoldDeep
+                        )
                         Spacer(Modifier.height(16.dp))
-                        Text("Uploading…", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Uploading…",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        )
                     }
 
                     is UploadState.Success -> {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = null,
-                            tint = Color(0xFF2E7D32),
+                            tint = com.biocap.app.ui.theme.StatusGreenInk,
                             modifier = Modifier.size(48.dp)
                         )
                         Spacer(Modifier.height(16.dp))

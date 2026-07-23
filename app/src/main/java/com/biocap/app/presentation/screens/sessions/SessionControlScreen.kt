@@ -59,8 +59,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -410,30 +408,23 @@ fun SessionControlScreen(
     ) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = session?.sessionCode ?: "New Session",
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isRecording) Color.White
-                            else MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        if (recordingUiState.recordingState != DataRecordingState.IDLE) {
-                            showBackDialog = true
-                        } else {
-                            onNavigateBack()
-                        }
-                    }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = if (isRecording) Color.White
-                                else MaterialTheme.colorScheme.onSurface
-                        )
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 12.dp, vertical = 12.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            com.biocap.app.presentation.components.BioCapTopBar(
+                title = session?.sessionCode ?: "New Session",
+                onNavigateBack = {
+                    if (recordingUiState.recordingState != DataRecordingState.IDLE) {
+                        showBackDialog = true
+                    } else {
+                        onNavigateBack()
                     }
                 },
                 actions = {
@@ -442,26 +433,9 @@ fun SessionControlScreen(
                         duration = recordingUiState.durationFormatted
                     )
                 },
-                colors = if (isRecording) {
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFFF44336)
-                    )
-                } else {
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
-                }
+                modifier = Modifier.padding(bottom = 4.dp)
             )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(12.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+
             // Readiness backup banner (only shows when a prerequisite is missing)
             ReadinessWarningCard(
                 missing = missingPrerequisites,
@@ -828,40 +802,38 @@ private fun RecordingBadge(
         label = "rec_badge_alpha"
     )
 
-    Row(
-        modifier = Modifier.padding(end = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    val recording = recordingState == DataRecordingState.RECORDING
+    val accent = if (recording) com.biocap.app.ui.theme.CriticalRed else com.biocap.app.ui.theme.WarningAmber
+    val accentInk = if (recording) com.biocap.app.ui.theme.CriticalRedInk else com.biocap.app.ui.theme.WarningAmberInk
+
+    androidx.compose.material3.Surface(
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(999.dp),
+        color = accent.copy(alpha = 0.12f)
     ) {
-        Box(
-            modifier = Modifier
-                .size(10.dp)
-                .alpha(if (recordingState == DataRecordingState.RECORDING) pulseAlpha else 1f)
-                .background(
-                    color = if (recordingState == DataRecordingState.RECORDING)
-                        Color.White
-                    else
-                        Color(0xFFFFA000),
-                    shape = CircleShape
-                )
-        )
-        Text(
-            text = if (recordingState == DataRecordingState.RECORDING) "REC" else "IDLE",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = if (recordingState == DataRecordingState.RECORDING)
-                Color.White
-            else
-                MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = duration,
-            style = MaterialTheme.typography.labelSmall,
-            color = if (recordingState == DataRecordingState.RECORDING)
-                Color.White.copy(alpha = 0.9f)
-            else
-                MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .alpha(if (recording) pulseAlpha else 1f)
+                    .background(color = accent, shape = CircleShape)
+            )
+            Text(
+                text = if (recording) "REC" else "IDLE",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = accentInk
+            )
+            Text(
+                text = duration,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
+                color = accentInk
+            )
+        }
     }
 }
 
