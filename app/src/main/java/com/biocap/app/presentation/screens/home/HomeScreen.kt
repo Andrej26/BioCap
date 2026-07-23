@@ -82,6 +82,7 @@ fun HomeScreen(
     val isStarting by viewModel.isStarting.collectAsState()
     val shouldAutoShowTutorial by viewModel.shouldAutoShowTutorial.collectAsState()
     val missingPrerequisites by viewModel.missingPrerequisites.collectAsState()
+    val canStartSession by viewModel.canStartSession.collectAsState()
     val watchBatteryAlert by viewModel.watchBatteryAlert.collectAsState()
     val watchBatteryLevel by viewModel.watchBatteryLevel.collectAsState()
     val linkConnectionState by viewModel.linkConnectionState.collectAsState()
@@ -228,8 +229,12 @@ fun HomeScreen(
                     val sessionActive = currentActive != null
                     PrimaryActionButton(
                         title = if (sessionActive) "Resume Active Session" else "Start New Session",
-                        subtitle = elapsedLabel ?: "New participant · scenarios A–E",
-                        enabled = !isStarting,
+                        subtitle = when {
+                            sessionActive -> elapsedLabel ?: "New participant · scenarios A–E"
+                            !canStartSession -> "Fix the warnings above to start"
+                            else -> "New participant · scenarios A–E"
+                        },
+                        enabled = !isStarting && canStartSession,
                         containerColor = if (sessionActive) ActiveSessionOrange
                             else MaterialTheme.colorScheme.primary,
                         contentColor = if (sessionActive) Color.White

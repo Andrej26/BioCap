@@ -333,6 +333,34 @@ fun TutorialScreen(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { viewModel.recheckLocationEnabled() }
 
+    // Readiness re-derive on resume — catches a battery/notification setting fixed via the finish
+    // step's card (or an OEM revocation) so the "Go to Sessions" gate reflects live OS state.
+    androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshReadiness()
+    }
+
+    // Fix launchers for the finish-step readiness card (mirrors HomeScreen's onFix flow).
+    val notificationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) com.biocap.app.presentation.components.onPermissionDenied(
+            context, Manifest.permission.POST_NOTIFICATIONS
+        )
+        viewModel.refreshReadiness()
+    }
+    val onReadinessFix: (com.biocap.app.data.system.SessionPrerequisite) -> Unit = { prerequisite ->
+        when (prerequisite) {
+            com.biocap.app.data.system.SessionPrerequisite.NOTIFICATIONS ->
+                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            com.biocap.app.data.system.SessionPrerequisite.MICROPHONE ->
+                audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            com.biocap.app.data.system.SessionPrerequisite.BLUETOOTH ->
+                blePermissionLauncher.launch(blePermissions)
+            com.biocap.app.data.system.SessionPrerequisite.BATTERY_OPTIMIZATION ->
+                com.biocap.app.service.BatteryOptimizationHelper.openExemptionSettings(context)
+        }
+    }
+
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -400,7 +428,12 @@ fun TutorialScreen(
                             enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                         }
                     )
-                    SlideType.COMPLETE -> TutorialCompleteStep(onGoToSessions = onStartSession)
+                    SlideType.COMPLETE -> TutorialCompleteStep(
+                        onGoToSessions = onStartSession,
+                        missingPrerequisites = uiState.missingPrerequisites,
+                        canStartSession = uiState.canStartSession,
+                        onReadinessFix = onReadinessFix
+                    )
                 }
             }
 
@@ -1444,7 +1477,12 @@ private fun WatchStatusCard(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun TutorialCompleteStep(onGoToSessions: () -> Unit) {
+private fun TutorialCompleteStep(
+    onGoToSessions: () -> Unit,
+    missingPrerequisites: Set<com.biocap.app.data.system.SessionPrerequisite>,
+    canStartSession: Boolean,
+    onReadinessFix: (com.biocap.app.data.system.SessionPrerequisite) -> Unit
+) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val pad = if (maxWidth < 600.dp) 16.dp else 24.dp
         Column(
@@ -1478,15 +1516,33 @@ private fun TutorialCompleteStep(onGoToSessions: () -> Unit) {
                 textAlign = TextAlign.Center
             )
 
+            // Blocking prerequisites (battery/notifications) must be fixed here before the operator
+            // can create a session — a session started without them can't record reliably yet can't
+            // be ended from the setup gate. Card renders nothing when everything's already granted.
+            com.biocap.app.presentation.components.ReadinessWarningCard(
+                missing = missingPrerequisites,
+                onFix = onReadinessFix
+            )
+
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
                 onClick = onGoToSessions,
+                enabled = canStartSession,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Go to Sessions")
+            }
+
+            if (!canStartSession) {
+                Text(
+                    text = "Fix the warnings above to continue",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
             }
 
             Text(
