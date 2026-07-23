@@ -1,3 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Window/splash background before Compose loads — the Parchment ivory ground, so there's no
+         white/gray flash on launch. Matches Ivory (#FAF7EE) in the Compose theme. -->
+    <color name="biocap_ivory">#FAF7EE</color>
+    <color name="biocap_navy">#131B2E</color>
 </resources>
