@@ -26,9 +26,7 @@ import androidx.compose.material.icons.filled.Battery6Bar
 import androidx.compose.material.icons.filled.BatteryFull
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,10 +36,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.RoundedCornerShape
+import com.biocap.app.presentation.components.AppCard
+import com.biocap.app.presentation.components.StatusPill
+import com.biocap.app.ui.theme.CriticalRed
+import com.biocap.app.ui.theme.GoldDeep
+import com.biocap.app.ui.theme.GoldInk
+import com.biocap.app.ui.theme.GoldSoft
+import com.biocap.app.ui.theme.Navy
 
 @Composable
 fun HeartRateDisplay(
@@ -53,25 +61,20 @@ fun HeartRateDisplay(
     modifier: Modifier = Modifier
 ) {
     Box(modifier = modifier.fillMaxWidth()) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
-    ) {
+    AppCard {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Heart icon with pulse animation
             PulsingHeart(
                 isAnimating = isMonitoring && heartRate != null
             )
 
-            // Heart rate value
+            // Heart rate value — extra-bold navy tabular numerals
             Row(
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.Center
@@ -80,63 +83,61 @@ fun HeartRateDisplay(
                     text = heartRate?.toString() ?: "--",
                     style = MaterialTheme.typography.displayLarge.copy(
                         fontSize = 72.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontFeatureSettings = "tnum"
                     ),
-                    color = if (heartRate != null) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                    }
+                    color = if (heartRate != null) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
                 Text(
                     text = " BPM",
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Start monitoring button
+            // Start / stop monitoring
             if (!isMonitoring) {
                 Button(
                     onClick = onStartMonitoring,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Navy,
+                        contentColor = Color.White
+                    )
                 ) {
-                    Text("Start Monitoring")
+                    Text("Start Monitoring", fontWeight = FontWeight.Bold)
                 }
             } else {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Text(
-                            text = "  Monitoring...",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    OutlinedButton(
+                    StatusPill(
+                        label = "Monitoring",
+                        dotColor = GoldDeep,
+                        spinning = true
+                    )
+                    Button(
                         onClick = onStopMonitoring,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = GoldSoft,
+                            contentColor = GoldInk
+                        )
                     ) {
-                        Text("Stop Monitoring")
+                        Text("Stop Monitoring", fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
     }
 
-    // Battery badge — top-right corner overlay
+    // Battery badge — top-right corner pill
     batteryLevel?.let { level ->
         Row(
             modifier = Modifier
@@ -148,14 +149,14 @@ fun HeartRateDisplay(
                 imageVector = batteryIcon(level),
                 contentDescription = "Battery $level%",
                 modifier = Modifier.size(18.dp),
-                tint = if (level < 20) MaterialTheme.colorScheme.error
+                tint = if (level < 20) CriticalRed
                        else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = "$level%",
                 style = MaterialTheme.typography.labelSmall,
-                color = if (level < 20) MaterialTheme.colorScheme.error
+                color = if (level < 20) CriticalRed
                         else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

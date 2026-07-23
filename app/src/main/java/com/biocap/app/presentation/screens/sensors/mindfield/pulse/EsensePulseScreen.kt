@@ -44,8 +44,6 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -80,32 +78,17 @@ fun EsensePulseScreen(
     viewModel: EsensePulseViewModel = hiltViewModel()
 ) {
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "eSense Pulse",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        EsensePulseContent(
-            viewModel = viewModel,
-            modifier = Modifier.padding(paddingValues)
-        )
+        Column(modifier = Modifier.padding(paddingValues)) {
+            com.biocap.app.presentation.components.BioCapTopBar(
+                title = "eSense Pulse",
+                subtitle = "BLE heart-rate monitor",
+                onNavigateBack = onNavigateBack,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            )
+            EsensePulseContent(viewModel = viewModel)
+        }
     }
 }
 

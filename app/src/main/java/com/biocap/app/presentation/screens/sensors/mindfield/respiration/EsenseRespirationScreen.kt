@@ -45,8 +45,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -104,27 +102,7 @@ fun EsenseRespirationScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "eSense Respiration",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         BoxWithConstraints(
             modifier = Modifier
@@ -138,6 +116,12 @@ fun EsenseRespirationScreen(
                     .fillMaxSize()
                     .padding(horizontal = hPad)
             ) {
+                com.biocap.app.presentation.components.BioCapTopBar(
+                    title = "eSense Respiration",
+                    subtitle = "Breathing sensor · audio jack",
+                    onNavigateBack = onNavigateBack,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
                 // Scrollable upper section (sensor info + controls)
                 Column(
                     modifier = Modifier

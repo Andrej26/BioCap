@@ -15,16 +15,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,7 +31,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.biocap.app.data.model.ConnectionState
+import com.biocap.app.data.sensor.watch.WatchLinkStatus
+import com.biocap.app.presentation.components.AppCard
+import com.biocap.app.presentation.components.AppIconBadge
+import com.biocap.app.presentation.components.BioCapTopBar
 import com.biocap.app.presentation.components.BluetoothDisabledCard
+import com.biocap.app.presentation.components.StatusPill
+import com.biocap.app.ui.theme.EyebrowGold
+import com.biocap.app.ui.theme.NeutralGray
+import com.biocap.app.ui.theme.StatusGreen
+import com.biocap.app.ui.theme.WarningAmber
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,28 +61,22 @@ fun WatchSensorScreen(
     ) { /* adapter state is observed reactively via viewModel.bluetoothEnabled */ }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Galaxy Watch", fontWeight = FontWeight.SemiBold) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(11.dp)
         ) {
+            BioCapTopBar(
+                title = "Galaxy Watch",
+                subtitle = "HR · IBI · EDA via Wearable link",
+                onNavigateBack = onNavigateBack
+            )
+
             // Bluetooth Disabled Warning — the watch link runs over direct Bluetooth, so without it
             // data can't arrive reliably (the cloud relay dies when the phone sleeps). Same card and
             // behaviour as the eSense Pulse screen.
@@ -90,71 +88,106 @@ fun WatchSensorScreen(
                 )
             }
 
-            // Connection status
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Channel", style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    // Prefer the finer link status so an expected screen-off/Doze gap reads as
-                    // "buffering", not a scary "Disconnected". Fall back to the coarse state only for
-                    // CONNECTING/ERROR, which the link status doesn't model.
-                    Text(
-                        text = when (connection) {
-                            ConnectionState.CONNECTING -> "Connecting…"
-                            ConnectionState.ERROR -> "Error"
-                            else -> when (linkStatus) {
-                                com.biocap.app.data.sensor.watch.WatchLinkStatus.LIVE -> "Connected"
-                                com.biocap.app.data.sensor.watch.WatchLinkStatus.DOZING -> "Watch dozing — buffering"
-                                com.biocap.app.data.sensor.watch.WatchLinkStatus.DISCONNECTED -> "Disconnected"
-                            }
-                        },
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    battery?.let {
-                        Spacer(Modifier.height(4.dp))
-                        Text("Watch battery: $it%", style = MaterialTheme.typography.bodyMedium)
+            // Connection status: gold watch badge + channel line, status pill on the right.
+            // Prefer the finer link status so an expected screen-off/Doze gap reads as "buffering",
+            // not a scary "Disconnected". Fall back to the coarse state for CONNECTING/ERROR.
+            val (statusLabel, statusDot, statusSpin) = when (connection) {
+                ConnectionState.CONNECTING -> Triple("Connecting…", WarningAmber, true)
+                ConnectionState.ERROR -> Triple("Error", com.biocap.app.ui.theme.CriticalRed, false)
+                else -> when (linkStatus) {
+                    WatchLinkStatus.LIVE -> Triple("Connected", StatusGreen, false)
+                    WatchLinkStatus.DOZING -> Triple("Dozing — buffering", WarningAmber, false)
+                    WatchLinkStatus.DISCONNECTED -> Triple("Disconnected", NeutralGray, false)
+                }
+            }
+            AppCard {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 15.dp, vertical = 13.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AppIconBadge(icon = Icons.Default.Watch)
+                    Spacer(Modifier.padding(6.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Channel", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        battery?.let {
+                            Text("Watch battery $it%", style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
+                    StatusPill(label = statusLabel, dotColor = statusDot, spinning = statusSpin)
                 }
             }
 
-            // Available trackers (what this watch can give us)
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Supported trackers", style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(4.dp))
-                    if (trackers.isEmpty()) {
-                        Text("—", style = MaterialTheme.typography.bodyMedium)
-                    } else {
-                        trackers.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
-                    }
-                }
-            }
-
-            // Live readings per type
-            Text("Live readings", style = MaterialTheme.typography.titleMedium)
+            // Live readings per type as a stat-tile grid.
+            Text(
+                "LIVE READINGS",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = EyebrowGold
+            )
             if (readings.isEmpty()) {
                 Text("Waiting for data… (start tracking on the watch)",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
-                readings.toSortedMap().forEach { (type, r) ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(watchSignalLabel(type), style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                text = watchValueText(type, r.value),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontFamily = FontFamily.Monospace
-                            )
-                        }
+                val entries = readings.toSortedMap().entries.toList()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(9.dp)
+                ) {
+                    entries.forEach { (type, r) ->
+                        WatchStatTile(
+                            label = watchSignalLabel(type),
+                            value = watchValueText(type, r.value),
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
+
+            // Available trackers (what this watch can give us)
+            AppCard {
+                Column(Modifier.padding(horizontal = 15.dp, vertical = 13.dp)) {
+                    Text("SUPPORTED TRACKERS", style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold, color = EyebrowGold)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = if (trackers.isEmpty()) "—" else trackers.joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** A compact live-reading stat tile: eyebrow label + big tabular value. */
+@Composable
+private fun WatchStatTile(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    AppCard(modifier = modifier) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = EyebrowGold
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                fontFamily = FontFamily.Monospace,
+                color = MaterialTheme.colorScheme.onSurface
+            )
         }
     }
 }
