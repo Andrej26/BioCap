@@ -11,12 +11,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.biocap.app.data.sensor.audio.LowSignalWarning
+import com.biocap.app.ui.theme.WarningAmber
 
 @Composable
 fun LowSignalWarningBanner(
@@ -35,7 +36,7 @@ fun LowSignalWarningBanner(
 ) {
     if (warningLevel == LowSignalWarning.NONE) return
 
-    val backgroundColor = Color(0xFFFFA000)
+    val backgroundColor = WarningAmber
     val text = "Low respiration signal detected. Check chest strap placement."
 
     val infiniteTransition = rememberInfiniteTransition(label = "lowSignalPulse")
@@ -49,14 +50,15 @@ fun LowSignalWarningBanner(
         label = "lowSignalAlpha"
     )
 
-    Card(
+    Surface(
         modifier = modifier
             .fillMaxWidth()
             .alpha(alpha),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+        shape = RoundedCornerShape(16.dp),
+        color = backgroundColor
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(13.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(

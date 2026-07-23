@@ -14,13 +14,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,6 +31,12 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.biocap.app.data.system.SessionPrerequisite
+import com.biocap.app.ui.theme.CardBorder
+import com.biocap.app.ui.theme.CardWhite
+import com.biocap.app.ui.theme.GoldInk
+import com.biocap.app.ui.theme.WarnBorder
+import com.biocap.app.ui.theme.WarnContainer
+import com.biocap.app.ui.theme.WarnInk
 
 /**
  * Conditional warning card listing session prerequisites that are currently missing, each with a
@@ -48,47 +55,47 @@ fun ReadinessWarningCard(
     // Stable display order regardless of set iteration order.
     val ordered = SessionPrerequisite.entries.filter { it in missing }
 
-    Card(
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.errorContainer
-        )
+        shape = RoundedCornerShape(16.dp),
+        color = WarnContainer,
+        border = BorderStroke(1.dp, WarnBorder)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Outlined.Warning,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                    modifier = Modifier.size(24.dp)
+                    tint = WarnInk,
+                    modifier = Modifier.size(22.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(9.dp))
                 Text(
                     text = "Setup needed before sessions",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onErrorContainer
+                    color = WarnInk
                 )
             }
 
             ordered.forEach { prerequisite ->
-                // Whole row is one clickable button; rows are spaced (12.dp above) so they read
+                // Whole row is one clickable button; rows are spaced (10.dp above) so they read
                 // as distinct tappable items rather than crowded markers.
-                Card(
+                Surface(
                     onClick = { onFix(prerequisite) },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface
-                    )
+                    shape = RoundedCornerShape(12.dp),
+                    color = CardWhite,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    border = BorderStroke(1.dp, CardBorder)
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                            .padding(horizontal = 13.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -101,12 +108,12 @@ fun ReadinessWarningCard(
                             text = "Fix",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = GoldInk
                         )
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = GoldInk,
                             modifier = Modifier.size(20.dp)
                         )
                     }
