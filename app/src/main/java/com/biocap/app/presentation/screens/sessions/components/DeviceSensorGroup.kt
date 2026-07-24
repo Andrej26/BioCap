@@ -79,6 +79,10 @@ fun DeviceSensorGroup(
         label = "device_group_rail"
     )
 
+    // A disconnected, tappable group gets a dashed primary border — the same "empty slot to fill"
+    // affordance as the disconnected LiveSensorCard, so the tap-here language is unified across the
+    // screen. The colored left rail still carries the connection state underneath.
+    val groupShape = RoundedCornerShape(16.dp)
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -86,10 +90,19 @@ fun DeviceSensorGroup(
             .then(
                 if (isClickable) Modifier.clickable { onClick?.invoke() }
                 else Modifier
+            )
+            .then(
+                if (isClickable) Modifier.dashedBorder(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = groupShape,
+                    strokeWidth = 2.dp,
+                    dashLength = 6.dp,
+                    gapLength = 4.dp
+                ) else Modifier
             ),
-        shape = RoundedCornerShape(16.dp),
+        shape = groupShape,
         color = MaterialTheme.colorScheme.surfaceVariant,
-        border = BorderStroke(1.dp, CardBorder)
+        border = if (isClickable) null else BorderStroke(1.dp, CardBorder)
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
             // Colored state rail.
@@ -145,11 +158,7 @@ fun DeviceSensorGroup(
             footer?.invoke(this)
 
             if (isClickable && clickHint != null) {
-                Text(
-                    text = clickHint,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                )
+                TapActionPill(text = clickHint, compact = true)
             }
             }
         }
