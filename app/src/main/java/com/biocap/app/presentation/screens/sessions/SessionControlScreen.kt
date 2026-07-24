@@ -477,6 +477,16 @@ fun SessionControlScreen(
                 WatchLinkLostBanner()
             }
 
+            // No-sensor warning during a scenario run: startManualRecording() self-guards on a
+            // connected sensor, so entering a scenario with none leaves the countdown idle and nothing
+            // recording. Tell the operator why (mirrors the setup-screen gate) instead of leaving a
+            // frozen countdown unexplained. Only in a real scenario run (not setup, which has its own
+            // gate), and only while nothing is recording — a mid-recording drop is covered by
+            // SensorLostDuringRecordingBanner above.
+            if (!setupMode && !anySensorConnected && !recordingUiState.isRecording) {
+                NoSensorConnectedBanner()
+            }
+
             // Hero auto-return countdown: a scenario run's whole purpose is to hand back to the
             // scenario-selection hub after the scenario's full duration (A/E 10 min, B/C 20 min,
             // D 30 min), so it's the focal point at the top. When the countdown ends we stop+finalize
@@ -1166,6 +1176,48 @@ private fun SensorLostDuringRecordingBanner(sensorNames: List<String>) {
                 Text(
                     text = "Recording continues — reconnect to resume data capture",
                     color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Shown on a scenario run when no sensor is connected: the recording + auto-return countdown are
+ * both gated on a connected sensor ([SessionControlViewModel.startManualRecording]), so without one
+ * nothing starts. Explains the otherwise-silent idle state so the operator knows to connect a sensor.
+ */
+@Composable
+private fun NoSensorConnectedBanner() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Sensors,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(
+                    text = "No sensor connected",
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Recording and the countdown won't start until at least one sensor is " +
+                        "connected. Connect one above to begin this scenario.",
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
