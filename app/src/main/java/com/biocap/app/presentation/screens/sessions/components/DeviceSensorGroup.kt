@@ -88,7 +88,7 @@ fun DeviceSensorGroup(
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
             .then(
-                if (isClickable) Modifier.clickable { onClick?.invoke() }
+                if (isClickable) Modifier.clickable { onClick() }
                 else Modifier
             )
             .then(
