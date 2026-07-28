@@ -114,7 +114,7 @@ eSense Respiration (audio jack)
         └─► sdkObserver.valueHasChanged(SensorData)
               └─► _dataRate (StateFlow<Float>) ──────────────────► UI (raw RA)
               └─► _detailedStats (StateFlow<String>) ──────────────► UI (br/min)
-              └─► sampleFlow (SharedFlow<Float>) ─────────────────► SensorRecordingRepository
+              └─► sampleFlow (SharedFlow<Float>) ─────────────────► ScenarioRecordingRepository
               └─► lowSignalWarning (StateFlow) ──────────────────► UI warning
 ```
 
@@ -129,6 +129,7 @@ CONNECTING
   │ setSensorType, setSampleFrequencyHz, startSampling
   │ 2.5-second verification phase
   │   ├─ fail (no/invalid signal) → forceDisconnect()
+  │   └─ disconnect() during the window → connectJob cancelled → DISCONNECTED
   ▼
 CONNECTED
   │ verification passed → startStreaming() called automatically
@@ -186,3 +187,8 @@ No Bluetooth or Location permissions are required for this sensor.
 
 **Disconnect reason persists**
 - After a `forceDisconnect`, the reason string is stored in `lastDisconnectReason`. The UI can display this as a dialog. Call `clearDisconnectReason()` after the user dismisses the dialog to reset the state.
+
+**Sensor "resurrects" itself shortly after being disconnected**
+- Historic bug, fixed. `connect()` launches a coroutine that ends with `delay(VERIFY_MS)` → `finishVerification()`. Disconnecting inside that 2.5-second window used to leave the coroutine running, so `finishVerification()` fired afterwards and flipped the sensor back to Connected/Streaming.
+- `disconnect()` now cancels the stored `connectJob` first. The coroutine rethrows `CancellationException` rather than letting it fall into the generic `catch`, which would otherwise trigger a spurious `forceDisconnect()`.
+- `MindfieldRespiration` is a process-wide `object`, so this state is shared across screens — any new code path that launches work from `connect()` must be cancellable the same way.

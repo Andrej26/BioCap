@@ -88,6 +88,39 @@ The app has three main responsibilities:
 
 **Target devices:** Android tablet and phone
 
+**Session prerequisite gates:** starting a session is blocked until the *blocking* prerequisites are
+satisfied — **battery-optimization exemption** and **notifications**
+(`SystemReadinessChecker.BLOCKING_PREREQUISITES`). Their absence silently loses an entire
+locked-screen session, so the gate sits at the point where **no session exists yet** (Home's *Start
+New Session* and the tutorial's finish button), never at the setup screen — blocking there would trap
+the operator with a dangling ACTIVE session they can't end. An already-active session is exempt, so
+resuming is never blocked. `BLUETOOTH` and `MICROPHONE` stay *soft* warnings (banner only): they fail
+loudly and locally at connect time, and not every session uses every sensor. Readiness is always
+re-derived from live OS state, never cached, because the OS can silently revoke a grant.
+Downstream, **Proceed to scenarios** additionally requires at least one connected sensor, and an
+in-scenario warning appears if every sensor drops.
+
+## Design System
+
+The UI follows a single brand visual language; new screens should compose it rather than inventing
+local styling.
+
+- **Tokens** live in `ui/theme/`. `Color.kt` holds the logo-derived palette (navy ink, gold accent,
+  ivory ground) plus a **semantic alert palette** deliberately shifted away from the brand gold so
+  warnings never read as the accent — amber `WarningAmber`, muted red `CriticalRed`, and paired
+  `…Ink` tones that stay legible on light tints.
+- **Single light scheme.** `Theme.kt` always applies `LightColorScheme` — there is **no dark mode and
+  no Material You dynamic color**. This is intentional: the operator screen must look identical on
+  every device in a study. Don't reintroduce `isSystemInDarkTheme()` branches.
+- **Typography** is Manrope, shipped as one variable font (`res/font/manrope_variable.ttf`) and
+  instanced per weight via `FontVariation`. On API 26+ the weight axis is honored; on API 24/25
+  Compose falls back to the font's Regular instance (accepted trade-off).
+- **Components.** `presentation/components/` is the shared library every screen builds on — `AppCard`
+  / `AppListCard` / `AppIconBadge` for surfaces, `BioCapTopBar` for the top bar, `StatusPill` /
+  `GoldChip` for status and accent chips. Prefer extending these over one-off `Card`/`Surface` usage.
+- **Mockups.** [doc/design/](doc/design/) holds the four static HTML mockups (`step1`–`step4`) the
+  redesign was built against — useful as the visual reference when adding a screen.
+
 ## Key Configuration
 
 **Dependency Management:** All versions and dependencies are centralized in `gradle/libs.versions.toml`. Add new dependencies there first, then reference them in `app/build.gradle.kts` using the `libs.` accessor.
@@ -139,7 +172,10 @@ this automatically on a single machine).
 
 Per-sensor references live in [doc/](doc/): [sensor_esense_pulse.md](doc/sensor_esense_pulse.md),
 [sensor_esense_respiration.md](doc/sensor_esense_respiration.md),
-[sensor_galaxy_watch.md](doc/sensor_galaxy_watch.md).
+[sensor_galaxy_watch.md](doc/sensor_galaxy_watch.md). Cross-sensor rates and the
+synchronization rationale (why there is no clock-sync step) are in
+[sensor_sampling_rates.md](doc/sensor_sampling_rates.md); installing the watch build over Wi-Fi is in
+[install_watch_app.md](doc/install_watch_app.md).
 
 **BLE Requirements (eSense Pulse):**
 - Android 12+: `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT` permissions
@@ -187,6 +223,8 @@ foreground `BackgroundConnectionService`. Cleartext is allowed only for the LAN
 `POST_NOTIFICATIONS`.
 
 Docs (in [doc/](doc/)): [peer_link_websocket.md](doc/peer_link_websocket.md) (link reference),
+[mdns_discovery.md](doc/mdns_discovery.md) (the discovery layer underneath it — `PeerMdnsService`,
+`_biocap._tcp`, prefix-scoped pairing),
 [webrtc_screen_share.md](doc/webrtc_screen_share.md) (screen-mirror reference + cost analysis),
 [screen_share_reproduction.md](doc/screen_share_reproduction.md) (step-by-step recipe).
 
@@ -211,6 +249,7 @@ com.biocap.app/
 │   │   ├── SensorSampleEntity.kt           # Sensor samples + SensorType enum (6 types)
 │   │   └── SensorSampleDao.kt
 │   ├── export/                             # Local session export (JSON + CSV to Documents)
+│   │   ├── ScenarioSampleCollector.kt      # shared sample load + per-type count for both mappers
 │   │   ├── SessionExportService.kt         # implements SessionExporter; MediaStore/legacy writes
 │   │   ├── SessionExportMapper.kt          # entities → export shape; statistics counted from exported samples
 │   │   ├── SessionUploader.kt              # upload interface (bound to SessionHttpUploader)
@@ -282,7 +321,10 @@ com.biocap.app/
 │   └── time/
 │       └── TimeProvider.kt                 # NTP-corrected clock (Kronos) for all persisted timestamps
 ├── presentation/
-│   ├── components/                          # Reusable UI components
+│   ├── components/                          # Shared BioCap UI component library (see Design System)
+│   │   ├── AppCard.kt                      # AppCard / AppListCard / AppIconBadge — base card surfaces
+│   │   ├── BioCapTopBar.kt                 # Brand top bar used by every screen
+│   │   ├── StatusPill.kt                   # StatusPill + GoldChip status/accent chips
 │   │   ├── BioSensorCard.kt
 │   │   ├── BleDialogTypes.kt
 │   │   ├── BluetoothDisabledCard.kt
@@ -362,10 +404,10 @@ com.biocap.app/
 ├── util/
 │   ├── DurationFormatting.kt                # formatDuration(ms) → HH:MM:SS
 │   └── TimeFormats.kt                       # ISO-UTC + session-code time tokens
-└── ui/theme/
-    ├── Color.kt
-    ├── Theme.kt
-    └── Type.kt
+└── ui/theme/                                # Brand design tokens (see Design System)
+    ├── Color.kt                             # Navy/gold/ivory palette + semantic alert tones
+    ├── Theme.kt                             # Single light scheme (no dark mode, no dynamic color)
+    └── Type.kt                              # Material 3 type scale retargeted to Manrope
 ```
 
 **`:wear` module** (`com.biocap.wear`):
@@ -396,9 +438,9 @@ com.biocap.wear/
 | `sensors/{sensorId}` | SensorDetailScreen | Router to vendor-specific sensor screen |
 | `participants/new` | ParticipantEntryScreen | Anonymized participant entry (creates participant + session) |
 | `sessions` | SessionsScreen | List of completed sessions |
-| `sessions/setup/{sessionId}` | SessionControlScreen (setup mode) | One-time sensor-connection gate after participant entry; Proceed → scenario hub |
+| `sessions/setup/{sessionId}` | SessionControlScreen (setup mode) | One-time sensor-connection gate after participant entry; **Proceed** requires ≥1 connected sensor → scenario hub |
 | `sessions/scenario-select/{sessionId}` | ScenarioSelectionScreen | Scenario hub: pick scenario A–E or end the session |
-| `sessions/active/{sessionId}?scenario={n}` | SessionControlScreen | Records the picked scenario (auto-start + countdown), returns to the hub |
+| `sessions/active/{sessionId}?scenario={n}` | SessionControlScreen | Records the picked scenario (auto-start + per-scenario countdown), returns to the hub |
 | `sessions/review/{sessionId}?showCsvSaved={bool}` | SessionDetailScreen | Session review; local export to Documents + upload to server |
 
 ## Database Schema
@@ -427,10 +469,13 @@ scenarios.
 | `ScenarioCode` | `REFERENCE_STATE`, `COGNITIVE_LOAD`, `DISTRACTING_ENVIRONMENT`, `LONG_TERM_FATIGUE`, `REACTION_TASKS` |
 | `SensorType` | `ESENSE_HEART_RATE`, `RESPIRATION`, `ESENSE_RR_INTERVAL`, `WATCH_HR`, `WATCH_IBI`, `WATCH_EDA` |
 
-`ScenarioCode` carries a short official code (`A`…`E`) and a display label (e.g. `Scenario A –
-Reference State`) as enum properties — the constant *name* (e.g. `REFERENCE_STATE`) is what's stored
-in the DB and sent to the server, so the descriptive labels can change without breaking old rows. (The
-`ScenarioCategory` concept and the `scenarioCategory` column were removed in v5.)
+`ScenarioCode` carries three enum properties: a short official code (`A`…`E`), a display label (e.g.
+`Scenario A – Reference State`), and `countdownMinutes` — the scenario's scripted duration
+(**A/E 10 min, B/C 20 min, D 30 min**), which drives the recording screen's countdown and the
+automatic hand-back to the scenario hub when it ends. The constant *name* (e.g. `REFERENCE_STATE`) is
+what's stored in the DB and sent to the server, so the descriptive labels and durations can change
+without breaking old rows. (The `ScenarioCategory` concept and the `scenarioCategory` column were
+removed in v5.)
 
 Session duration is derived from `endedAt − startedAt`. All timestamps come from an NTP-corrected
 clock (`TimeProvider`) on the same UTC timeline, so cross-stream alignment needs no clock-sync.
@@ -504,7 +549,7 @@ Unit tests live under `app/src/test/` and run on the host JVM (no device/emulato
 | File | Target | What it covers |
 |------|--------|----------------|
 | `data/recording/GapDetectorTest.kt` | `GapDetector.kt` | Gap detection edge cases: empty input, startup threshold, boundary conditions, mixed sensor types, unsorted input, per-sensor-type routing |
-| `data/recording/ScenarioRecordingRepositoryImplTest.kt` | `ScenarioRecordingRepositoryImpl.kt` | Start/stop state machine, sensor detection, sample buffering + flushing, scenario-end finalization |
+| `data/recording/ScenarioRecordingRepositoryImplTest.kt` | `ScenarioRecordingRepositoryImpl.kt` | Start/stop state machine, sensor detection, sample buffering + flushing, scenario-end finalization; real-threaded stress test asserting no exception escapes when start/stop races concurrent sensor emissions |
 | `data/recording/WatchSessionDrainerTest.kt` | `WatchSessionDrainer.kt` | Per-(scenario,type) timestamp-window attribution + de-dup for EDA/HR/IBI; gap/boundary/back-to-back rules |
 | `data/recording/WatchReconciliationReportTest.kt` | `WatchReconciliationReport.kt` | ok/mismatch verdict + summary formatting |
 | `data/repository/ParticipantRepositoryTest.kt` | `ParticipantRepository.kt` | Code generation (`A-001`…, per-device-prefix scoped), uniqueness validation, fetch by ID/code |
