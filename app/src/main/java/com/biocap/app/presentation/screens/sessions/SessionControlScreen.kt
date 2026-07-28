@@ -92,7 +92,7 @@ import com.biocap.app.presentation.components.onPermissionDenied
 import com.biocap.app.service.BatteryOptimizationHelper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.biocap.app.data.sensor.audio.LowSignalWarning
+import com.biocap.app.data.sensor.audio.RespirationWarning
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
@@ -106,7 +106,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.biocap.app.presentation.components.BleDialogState
 import com.biocap.app.presentation.components.DialogAction
-import com.biocap.app.presentation.components.LowSignalWarningBanner
+import com.biocap.app.presentation.components.RespirationWarningBanner
 import com.biocap.app.presentation.screens.sensors.components.BleDeviceItem
 import com.biocap.app.presentation.screens.sensors.toConnectionState
 import com.biocap.app.presentation.screens.sessions.components.DeviceSensorGroup
@@ -191,8 +191,8 @@ fun SessionControlScreen(
         viewModel.setBlePermissionsGranted(permissions.values.all { it })
     }
 
-    // Low signal warning
-    val respirationLowSignalWarning by viewModel.respirationLowSignalWarning.collectAsState()
+    // Respiration warning (signal lost / no breathing — mutually exclusive)
+    val respirationWarning by viewModel.respirationWarning.collectAsState()
 
     // Respiration disconnect reason (for error dialog)
     val respirationDisconnectReason by viewModel.respirationDisconnectReason.collectAsState()
@@ -446,9 +446,9 @@ fun SessionControlScreen(
                 onFix = onReadinessFix
             )
 
-            // Low signal warning banner
-            if (respirationLowSignalWarning != LowSignalWarning.NONE) {
-                LowSignalWarningBanner(warningLevel = respirationLowSignalWarning)
+            // Respiration warning banner — one at a time; SIGNAL_LOST outranks NO_BREATHING
+            if (respirationWarning != RespirationWarning.NONE) {
+                RespirationWarningBanner(warning = respirationWarning)
             }
 
             // Sensor-lost-during-recording warning banner

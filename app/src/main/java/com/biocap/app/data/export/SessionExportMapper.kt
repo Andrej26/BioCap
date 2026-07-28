@@ -7,6 +7,8 @@ import com.biocap.app.data.db.SensorType
 import com.biocap.app.data.db.SessionEntity
 import com.biocap.app.data.export.model.GapExport
 import com.biocap.app.data.export.model.ParticipantExport
+import com.biocap.app.data.export.model.RespirationIssueExport
+import com.biocap.app.data.export.model.RespirationIssues
 import com.biocap.app.data.export.model.ScenarioExport
 import com.biocap.app.data.export.model.ScenarioGaps
 import com.biocap.app.data.export.model.SensorGapInfo
@@ -15,9 +17,12 @@ import com.biocap.app.data.export.model.SessionExport
 import com.biocap.app.data.export.model.SessionInfo
 import com.biocap.app.data.export.model.SessionStatistics
 import com.biocap.app.data.recording.GapEvent
+import com.biocap.app.data.recording.RespirationIssue
+import com.biocap.app.data.recording.RespirationIssueEvent
 import com.biocap.app.data.recording.detectEsenseRrIntervalGaps
 import com.biocap.app.data.recording.detectHeartRateGaps
 import com.biocap.app.data.recording.detectRespirationGaps
+import com.biocap.app.data.recording.detectRespirationIssues
 import com.biocap.app.data.time.TimeProvider
 import com.biocap.app.util.TimeFormats
 import javax.inject.Inject
@@ -110,6 +115,7 @@ class SessionExportMapper @Inject constructor(
             startedAt = TimeFormats.iso(scenario.startedAt),
             endedAt = scenario.endedAt?.let { TimeFormats.iso(it) },
             gaps = gaps,
+            respirationIssues = respirationIssuesOrNull(detectRespirationIssues(samples)),
             samples = sampleExports
         )
     }
@@ -121,4 +127,25 @@ class SessionExportMapper @Inject constructor(
             gapTotalMs = gaps.sumOf { it.gapMs },
             gaps = gaps.map { GapExport(it.startElapsedMs, it.endElapsedMs, it.gapMs) }
         )
+
+    private fun respirationIssuesOrNull(events: List<RespirationIssueEvent>): RespirationIssues? {
+        if (events.isEmpty()) return null
+        val (signalLost, noBreathing) = events.partition {
+            it.reason == RespirationIssue.SIGNAL_LOST
+        }
+        return RespirationIssues(
+            signalLostCount = signalLost.size,
+            signalLostTotalMs = signalLost.sumOf { it.durationMs },
+            noBreathingCount = noBreathing.size,
+            noBreathingTotalMs = noBreathing.sumOf { it.durationMs },
+            events = events.map {
+                RespirationIssueExport(
+                    reason = it.reason.name,
+                    startElapsedMs = it.startElapsedMs,
+                    endElapsedMs = it.endElapsedMs,
+                    durationMs = it.durationMs
+                )
+            }
+        )
+    }
 }

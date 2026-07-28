@@ -61,10 +61,10 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.biocap.app.data.model.ConnectionState
 import com.biocap.app.data.sensor.DeviceState
-import com.biocap.app.data.sensor.audio.LowSignalWarning
+import com.biocap.app.data.sensor.audio.RespirationWarning
 import com.biocap.app.presentation.components.BioSensorCard
 import com.biocap.app.presentation.components.ConnectionStatusBadge
-import com.biocap.app.presentation.components.LowSignalWarningBanner
+import com.biocap.app.presentation.components.RespirationWarningBanner
 import com.biocap.app.presentation.log.LogEntry
 import com.biocap.app.presentation.log.LogType
 
@@ -134,9 +134,9 @@ fun EsenseRespirationScreen(
                     // Sensor Info Card
                     SensorInfoCard(state = uiState.state)
 
-                    // Low signal warning banner
-                    if (uiState.lowSignalWarning != LowSignalWarning.NONE) {
-                        LowSignalWarningBanner(warningLevel = uiState.lowSignalWarning)
+                    // Respiration warning banner — one at a time
+                    if (uiState.warning != RespirationWarning.NONE) {
+                        RespirationWarningBanner(warning = uiState.warning)
                     }
 
                     // Permission Card (if not granted)

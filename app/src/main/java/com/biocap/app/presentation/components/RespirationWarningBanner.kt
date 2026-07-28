@@ -26,20 +26,30 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.biocap.app.data.sensor.audio.LowSignalWarning
+import com.biocap.app.data.sensor.audio.RespirationWarning
 import com.biocap.app.ui.theme.WarningAmber
 
+/**
+ * The single respiration warning banner. [RespirationWarning] is mutually exclusive by construction,
+ * so only one message can ever be on screen — two banners both telling the operator to check the
+ * strap would be noise, not information.
+ */
 @Composable
-fun LowSignalWarningBanner(
-    warningLevel: LowSignalWarning,
+fun RespirationWarningBanner(
+    warning: RespirationWarning,
     modifier: Modifier = Modifier
 ) {
-    if (warningLevel == LowSignalWarning.NONE) return
+    if (warning == RespirationWarning.NONE) return
 
-    val backgroundColor = WarningAmber
-    val text = "Low respiration signal detected. Check chest strap placement."
+    val text = when (warning) {
+        RespirationWarning.SIGNAL_LOST ->
+            "Respiration signal lost — check chest strap placement."
+        RespirationWarning.NO_BREATHING ->
+            "No breathing detected — check the respiration chest strap."
+        RespirationWarning.NONE -> return
+    }
 
-    val infiniteTransition = rememberInfiniteTransition(label = "lowSignalPulse")
+    val infiniteTransition = rememberInfiniteTransition(label = "respirationWarningPulse")
     val alpha by infiniteTransition.animateFloat(
         initialValue = 1f,
         targetValue = 0.6f,
@@ -47,7 +57,7 @@ fun LowSignalWarningBanner(
             animation = tween(500),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "lowSignalAlpha"
+        label = "respirationWarningAlpha"
     )
 
     Surface(
@@ -55,7 +65,7 @@ fun LowSignalWarningBanner(
             .fillMaxWidth()
             .alpha(alpha),
         shape = RoundedCornerShape(16.dp),
-        color = backgroundColor
+        color = WarningAmber
     ) {
         Row(
             modifier = Modifier.padding(13.dp),

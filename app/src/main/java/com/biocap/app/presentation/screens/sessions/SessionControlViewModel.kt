@@ -13,7 +13,7 @@ import com.biocap.app.data.recording.WatchReconciliationReport
 import com.biocap.app.data.system.LocationChecker
 import com.biocap.app.data.recording.model.DataRecordingState
 import com.biocap.app.data.repository.ConnectionRepository
-import com.biocap.app.data.sensor.audio.LowSignalWarning
+import com.biocap.app.data.sensor.audio.RespirationWarning
 import com.biocap.app.data.repository.ScenarioRepository
 import com.biocap.app.data.repository.SessionRepository
 import com.biocap.app.data.sensor.DeviceState
@@ -162,9 +162,9 @@ class SessionControlViewModel @Inject constructor(
     /** Live raw Respiration Amplitude (RA, dimensionless) — not a breaths-per-minute rate */
     val respirationRate: StateFlow<Float> = connectionRepository.respirationRate
 
-    /** Low signal warning from respiration sensor */
-    val respirationLowSignalWarning: StateFlow<LowSignalWarning> =
-        connectionRepository.respirationLowSignalWarning
+    /** Respiration warning shown during recording (signal lost / no breathing) */
+    val respirationWarning: StateFlow<RespirationWarning> =
+        connectionRepository.respirationWarning
 
     /** Last disconnect/error reason from respiration sensor */
     val respirationDisconnectReason: StateFlow<String?> =
