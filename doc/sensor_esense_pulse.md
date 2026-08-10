@@ -116,8 +116,8 @@ R-R samples are emitted through `rrIntervalSampleFlow` (SharedFlow, buffer 256),
 eSense Pulse (BLE)
   └─► BleManagerImpl (GATT callback)
         └─► _heartRate (StateFlow<Int?>) ──────────────────► UI display
-        └─► heartRateSampleFlow (SharedFlow<Float>) ────────► SensorRecordingRepository
-        └─► rrIntervalSampleFlow (SharedFlow<Float>) ────────► SensorRecordingRepository
+        └─► heartRateSampleFlow (SharedFlow<Float>) ────────► ScenarioRecordingRepository
+        └─► rrIntervalSampleFlow (SharedFlow<Float>) ────────► ScenarioRecordingRepository
               (both flows blocked during 5-second warmup)
 ```
 
@@ -136,16 +136,18 @@ Both are cleared on disconnect and when HR notifications are disabled. `RrInterv
 
 eSense Pulse data is **recording-scoped** — it is collected while a scenario is recording (start → stop), alongside eSense Respiration.
 
-When a recording starts, `SensorRecordingRepositoryImpl` checks if the eSense Pulse is connected (`ConnectionState.CONNECTED`). If so:
+When a recording starts, `ScenarioRecordingRepositoryImpl` checks if the eSense Pulse is connected (`ConnectionState.CONNECTED`). If so:
 1. `enableHeartRateNotifications()` is called explicitly to ensure HR notifications are active before collecting begins.
 2. Two collector coroutines are launched:
-   - `heartRateSampleFlow` → `SensorType.HEART_RATE` samples in `sensor_samples` table
+   - `heartRateSampleFlow` → `SensorType.ESENSE_HEART_RATE` samples in `sensor_samples` table
    - `rrIntervalSampleFlow` → `SensorType.ESENSE_RR_INTERVAL` samples in `sensor_samples` table (same BLE characteristic, zero extra cost)
-3. Sample counts are tracked in `RecordingEntity` (`heartRateSampleCount`, `esenseRrIntervalSampleCount`).
+3. Samples are buffered and written in batches (50 samples, or a 1-second flush interval — whichever comes first), each row carrying the scenario's FK plus `timestampMs` and `elapsedMs`.
 
-When recording stops, collectors are cancelled but HR notifications remain active. The user can continue viewing live heart rate and R-R data after recording ends.
+When recording stops, collectors are cancelled (`cancelAndJoin`, so no collector can outlive the write channel) but HR notifications remain active. The user can continue viewing live heart rate and R-R data after recording ends.
 
-**Chart display:** `HEART_RATE` samples are shown on the test review timeline chart. `ESENSE_RR_INTERVAL` samples are recorded to the database and included in CSV export, but are not plotted on the timeline.
+**Sample counts** are *not* stored per recording. They are aggregated at **session end**: `SessionRepository` sums `SensorSampleDao.getSampleCountBySensorType(...)` across the session's scenarios into the `sessions` row (`hrSampleCount` for `ESENSE_HEART_RATE`, `rrIntervalSampleCount` for `ESENSE_RR_INTERVAL`).
+
+**Review display:** both types are recorded to the database and included in the JSON/CSV export and the server upload. The session review screen shows per-sensor summary counts — there is no timeline chart.
 
 ### Database Schema
 
@@ -153,14 +155,17 @@ eSense Pulse data uses the existing `sensor_samples` table with two dedicated se
 
 ```sql
 -- SensorType enum values used by eSense Pulse:
--- HEART_RATE           — BPM value (one sample per HR notification, as Float)
+-- ESENSE_HEART_RATE    — BPM value (one sample per HR notification, as Float)
 -- ESENSE_RR_INTERVAL   — R-R interval in ms (one row per inter-beat interval, as Float)
 
--- Recording entity fields:
--- heartRateEnabled: Boolean              — whether eSense Pulse was connected at recording start
--- heartRateSampleCount: Int              — running count of HR samples
--- esenseRrIntervalSampleCount: Int       — running count of R-R interval samples
+-- Aggregated onto the `sessions` row at session end (see SessionEntity):
+-- hrSampleCount: Int           — total ESENSE_HEART_RATE samples across the session's scenarios
+-- rrIntervalSampleCount: Int   — total ESENSE_RR_INTERVAL samples across the session's scenarios
 ```
+
+> `ESENSE_HEART_RATE` is deliberately distinct from the watch's `WATCH_HR` (split in DB v3) so
+> simultaneously-recorded HR from the two devices never merges. See
+> [sensor_galaxy_watch.md](sensor_galaxy_watch.md).
 
 ### Connection State Machine
 
@@ -226,3 +231,8 @@ DISCONNECTED
 
 **Bluetooth turned off mid-session**
 - The BroadcastReceiver in `BleManagerImpl` detects this and emits `BleEvent.Disconnected("Bluetooth disabled")`. The session recording should be stopped from the ViewModel in response.
+
+**Sensor becomes unconnectable until the app is restarted (GATT status 133)**
+- Android caps GATT client registrations at roughly 30 per app. Every `connectGatt()` without a matching `close()` leaks one; once the cap is hit, further `connectGatt()` calls fail silently with status 133 and no amount of retrying helps.
+- `BleManagerImpl.connect()` guards against this by closing any leftover GATT client before opening a new one, so double-taps and retries no longer leak. It calls `close()` **only** — not `disconnect()` + `close()` — because the shared `gattCallback` doesn't filter by `gatt` instance, and a stray async disconnect callback from the old client could otherwise clobber the fresh connection.
+- Any future code path that calls `connectGatt()` must preserve this invariant.

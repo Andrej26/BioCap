@@ -6,10 +6,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.biocap.app.data.sensor.DeviceState
+import com.biocap.app.ui.theme.GoldInk
+import com.biocap.app.ui.theme.GoldSoft
+import com.biocap.app.ui.theme.Navy
+import com.biocap.app.ui.theme.StatusGreen
+import com.biocap.app.ui.theme.StatusGreenInk
 
 @Composable
 fun BioSensorCard(
@@ -17,15 +22,14 @@ fun BioSensorCard(
     state: DeviceState,
     rate: Float,
     stats: String,
-    unit: String = "br/min",
+    /** Unit of [rate] — always passed explicitly; there is no sensible cross-sensor default. */
+    unit: String,
     onToggle: () -> Unit,
     showStreamData: Boolean = false,
     onToggleStreamDisplay: () -> Unit = {}
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
-    ) {
+    val isStreaming = state == DeviceState.Streaming
+    AppCard {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -35,18 +39,22 @@ fun BioSensorCard(
                 Text(
                     text = sensorName,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
-                // Small badge for state
+                // Soft state chip
                 Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (state == DeviceState.Streaming) Color(0xFF4CAF50) else Color.Gray.copy(alpha = 0.5f)
+                    shape = RoundedCornerShape(999.dp),
+                    color = if (isStreaming) StatusGreen.copy(alpha = 0.15f)
+                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f)
                 ) {
                     Text(
                         text = state.name.uppercase(),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.White
+                        fontWeight = FontWeight.Bold,
+                        color = if (isStreaming) StatusGreenInk
+                            else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -60,19 +68,21 @@ fun BioSensorCard(
                 Text(
                     text = String.format("%.1f", displayRate),
                     style = MaterialTheme.typography.displayLarge,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                    fontWeight = FontWeight.Bold,
+                    color = if (showStreamData) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
                 Text(
                     text = " $unit",
                     modifier = Modifier.padding(bottom = 6.dp),
-                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
                     text = displayStats,
                     style = MaterialTheme.typography.bodySmall,
                     fontFamily = FontFamily.Monospace,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.6f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
 
@@ -82,16 +92,25 @@ fun BioSensorCard(
                 Button(
                     onClick = onToggle,
                     modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.tertiaryContainer
+                        containerColor = Navy,
+                        contentColor = androidx.compose.ui.graphics.Color.White
                     )
                 ) {
                     Text(if (state == DeviceState.Disconnected) "CONNECT" else "DISCONNECT")
                 }
 
-                if (state == DeviceState.Streaming) {
-                    Button(onClick = onToggleStreamDisplay, modifier = Modifier.weight(1f)) {
+                if (isStreaming) {
+                    Button(
+                        onClick = onToggleStreamDisplay,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = GoldSoft,
+                            contentColor = GoldInk
+                        )
+                    ) {
                         Text(if (showStreamData) "HIDE DATA" else "SHOW DATA")
                     }
                 }

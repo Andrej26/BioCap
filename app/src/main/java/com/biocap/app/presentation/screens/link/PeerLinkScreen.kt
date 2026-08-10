@@ -17,8 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.LinkOff
-import androidx.compose.material.icons.filled.ScreenShare
-import androidx.compose.material.icons.filled.StopScreenShare
+import androidx.compose.material.icons.automirrored.filled.ScreenShare
+import androidx.compose.material.icons.automirrored.filled.StopScreenShare
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -30,8 +30,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -100,32 +98,21 @@ fun PeerLinkScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = if (role == PeerRole.SERVER) "Link — Server" else "Link — Client",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
+            com.biocap.app.presentation.components.BioCapTopBar(
+                title = if (role == PeerRole.SERVER) "Link — Server" else "Link — Client",
+                subtitle = "Device-to-device link",
+                onNavigateBack = onNavigateBack
+            )
+
             if (!batteryExempt) {
                 BatteryReminderCard(
                     onAllow = { BatteryOptimizationHelper.openExemptionSettings(context) }
@@ -280,7 +267,7 @@ private fun ScreenMonitorCard(
                     ),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) {
-                    Icon(Icons.Default.ScreenShare, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Filled.ScreenShare, contentDescription = null)
                     Text(
                         text = "  View screen",
                         style = MaterialTheme.typography.titleMedium,
@@ -295,7 +282,7 @@ private fun ScreenMonitorCard(
                         contentColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Icon(Icons.Default.StopScreenShare, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Filled.StopScreenShare, contentDescription = null)
                     Text("  Stop viewing")
                 }
             }
@@ -348,7 +335,7 @@ private fun SharingCard(onStop: () -> Unit) {
                     contentColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Icon(Icons.Default.StopScreenShare, contentDescription = null)
+                Icon(Icons.AutoMirrored.Filled.StopScreenShare, contentDescription = null)
                 Text("  Stop sharing")
             }
         }

@@ -9,6 +9,7 @@ import com.biocap.app.data.db.SensorSampleEntity
 import com.biocap.app.data.db.SensorType
 import com.biocap.app.data.db.SessionEntity
 import com.biocap.app.data.db.SessionStatus
+import com.biocap.app.data.export.ScenarioSampleCollector
 import com.biocap.app.data.repository.ScenarioRepository
 import com.biocap.app.data.time.TimeProvider
 import kotlinx.coroutines.test.runTest
@@ -28,7 +29,7 @@ class SessionUploadMapperTest {
         val scenarioDao = FakeScenarioDao()
         sampleDao = FakeSensorSampleDao()
         scenarioRepository = ScenarioRepository(scenarioDao, sampleDao, TimeProvider.system())
-        mapper = SessionUploadMapper(scenarioRepository)
+        mapper = SessionUploadMapper(ScenarioSampleCollector(scenarioRepository))
     }
 
     private fun participant() = ParticipantEntity(

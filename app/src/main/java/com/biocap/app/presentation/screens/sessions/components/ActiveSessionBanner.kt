@@ -15,11 +15,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,6 +31,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.biocap.app.ui.theme.CriticalRed
+import com.biocap.app.ui.theme.Navy
+import com.biocap.app.ui.theme.WarningAmber
+import com.biocap.app.ui.theme.WarningAmberInk
 
 @Composable
 fun ActiveSessionBanner(
@@ -50,45 +56,45 @@ fun ActiveSessionBanner(
         label = "pulse_alpha"
     )
 
-    Card(
+    Surface(
         onClick = onResume,
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF44336).copy(alpha = 0.12f)
-        )
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFFF9ECDF),
+        border = BorderStroke(1.dp, Color(0xFFE5C9A6))
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(15.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Pulsing recording dot
+            // Pulsing recording dot (red) while recording; static amber when merely active.
             if (isRecording) {
                 Box(
                     modifier = Modifier
-                        .size(12.dp)
+                        .size(11.dp)
                         .alpha(pulseAlpha)
-                        .background(Color(0xFFF44336), CircleShape)
+                        .background(CriticalRed, CircleShape)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "REC",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFFF44336),
+                    color = Color(0xFFA3542A),
                     fontWeight = FontWeight.Bold
                 )
             } else {
                 Box(
                     modifier = Modifier
-                        .size(12.dp)
-                        .background(Color(0xFFFFA000), CircleShape)
+                        .size(11.dp)
+                        .background(WarningAmber, CircleShape)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "ACTIVE",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFFFFA000),
+                    color = WarningAmberInk,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -99,7 +105,7 @@ fun ActiveSessionBanner(
                 Text(
                     text = sessionCode,
                     style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Bold
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -119,7 +125,14 @@ fun ActiveSessionBanner(
                 }
             }
 
-            FilledTonalButton(onClick = onResume) {
+            Button(
+                onClick = onResume,
+                shape = RoundedCornerShape(999.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Navy,
+                    contentColor = Color.White
+                )
+            ) {
                 Text("Resume")
             }
         }

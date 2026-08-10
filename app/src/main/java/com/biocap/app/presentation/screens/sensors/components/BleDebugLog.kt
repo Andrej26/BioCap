@@ -28,6 +28,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.biocap.app.presentation.log.BleLogEntry
+import com.biocap.app.ui.theme.ConsoleMuted
+import com.biocap.app.ui.theme.ConsoleNavy
+import com.biocap.app.ui.theme.ConsoleText
+import com.biocap.app.ui.theme.CriticalRed
+import com.biocap.app.ui.theme.Gold
 
 /**
  * Composable that displays a scrollable debug log of BLE events.
@@ -47,57 +52,52 @@ fun BleDebugLog(
         }
     }
 
-    Column(modifier = modifier.fillMaxWidth()) {
-        // Header
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Debug Log (${logEntries.size}) · UTC",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-
-            IconButton(
-                onClick = onClearLog,
-                enabled = logEntries.isNotEmpty()
+    // Navy console: diagnostics visually separate from the operator UI.
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        color = ConsoleNavy
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 15.dp, vertical = 13.dp)) {
+            // Header: gold eyebrow + Clear action.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Clear log",
-                    tint = if (logEntries.isNotEmpty()) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                    }
+                Text(
+                    text = "DEBUG LOG (${logEntries.size}) · UTC",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Gold
                 )
+
+                IconButton(
+                    onClick = onClearLog,
+                    enabled = logEntries.isNotEmpty()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Clear log",
+                        tint = if (logEntries.isNotEmpty()) ConsoleMuted
+                            else ConsoleMuted.copy(alpha = 0.38f)
+                    )
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-        // Log content
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp),
-            shape = MaterialTheme.shapes.small,
-            color = MaterialTheme.colorScheme.surfaceContainerLowest,
-            tonalElevation = 0.dp
-        ) {
             if (logEntries.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .height(160.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = "No log entries yet",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = ConsoleMuted
                     )
                 }
             } else {
@@ -105,7 +105,7 @@ fun BleDebugLog(
                     state = listState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
+                        .height(200.dp),
                     verticalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     itemsIndexed(
@@ -129,35 +129,28 @@ private fun LogEntryItem(
         modifier = modifier
             .fillMaxWidth()
             .background(
-                if (entry.isError) {
-                    MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
-                } else {
-                    MaterialTheme.colorScheme.surface.copy(alpha = 0f)
-                }
+                if (entry.isError) CriticalRed.copy(alpha = 0.14f)
+                else ConsoleNavy.copy(alpha = 0f)
             )
             .padding(horizontal = 4.dp, vertical = 2.dp),
         verticalAlignment = Alignment.Top
     ) {
-        // Timestamp
+        // Timestamp (muted).
         Text(
             text = entry.timestamp,
             style = MaterialTheme.typography.labelSmall,
             fontFamily = FontFamily.Monospace,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+            color = ConsoleMuted
         )
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // Message
+        // Message: red for errors, green-tinted for success-ish, default console text otherwise.
         Text(
             text = entry.message,
             style = MaterialTheme.typography.bodySmall,
             fontFamily = FontFamily.Monospace,
-            color = if (entry.isError) {
-                MaterialTheme.colorScheme.error
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            },
+            color = if (entry.isError) CriticalRed else ConsoleText,
             modifier = Modifier.weight(1f)
         )
     }

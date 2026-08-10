@@ -33,8 +33,6 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -69,27 +67,7 @@ fun ParticipantEntryScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "New Participant",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -102,43 +80,22 @@ fun ParticipantEntryScreen(
                 modifier = Modifier
                     .widthIn(max = 560.dp)
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                com.biocap.app.presentation.components.BioCapTopBar(
+                    title = "New Participant",
+                    subtitle = "Anonymized code + basic demographics",
+                    onNavigateBack = onNavigateBack
+                )
+
+                com.biocap.app.presentation.components.AppCard {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(20.dp)
                     ) {
-                        // Header
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                modifier = Modifier.size(36.dp),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                            Column(modifier = Modifier.padding(start = 12.dp)) {
-                                Text(
-                                    text = "New Participant",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                                Text(
-                                    text = "Enter the anonymized code and basic demographics, " +
-                                            "then start the session.",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                            }
-                        }
-
                         // Participant code — auto-generated from the device prefix (Settings),
                         // read-only so it can't be edited into a colliding code.
                         OutlinedTextField(
@@ -197,17 +154,22 @@ fun ParticipantEntryScreen(
                         Button(
                             onClick = viewModel::submit,
                             enabled = uiState.isInitialized && !uiState.isSubmitting,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
+                            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                                containerColor = com.biocap.app.ui.theme.Navy,
+                                contentColor = androidx.compose.ui.graphics.Color.White
+                            )
                         ) {
                             if (uiState.isSubmitting) {
                                 CircularProgressIndicator(
                                     modifier = Modifier
                                         .padding(end = 8.dp)
                                         .size(20.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary
+                                    color = androidx.compose.ui.graphics.Color.White
                                 )
                             }
-                            Text(text = "Start session")
+                            Text(text = "Start session", fontWeight = FontWeight.Bold)
                         }
                     }
                 }

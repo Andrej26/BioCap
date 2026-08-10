@@ -59,8 +59,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -94,7 +92,7 @@ import com.biocap.app.presentation.components.onPermissionDenied
 import com.biocap.app.service.BatteryOptimizationHelper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.biocap.app.data.sensor.audio.LowSignalWarning
+import com.biocap.app.data.sensor.audio.RespirationWarning
 import android.Manifest
 import android.app.Activity
 import android.content.Intent
@@ -108,7 +106,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.biocap.app.presentation.components.BleDialogState
 import com.biocap.app.presentation.components.DialogAction
-import com.biocap.app.presentation.components.LowSignalWarningBanner
+import com.biocap.app.presentation.components.RespirationWarningBanner
 import com.biocap.app.presentation.screens.sensors.components.BleDeviceItem
 import com.biocap.app.presentation.screens.sensors.toConnectionState
 import com.biocap.app.presentation.screens.sessions.components.DeviceSensorGroup
@@ -150,6 +148,10 @@ fun SessionControlScreen(
     // Recording state
     val recordingUiState by viewModel.recordingUiState.collectAsState()
 
+    // Setup-mode gate: at least one sensor must be connected before advancing to the scenario hub,
+    // otherwise a scenario run would start a countdown but silently record nothing.
+    val anySensorConnected by viewModel.anySensorConnected.collectAsState()
+
     // Session state
     val session by viewModel.session.collectAsState()
     val endSessionResult by viewModel.endSessionResult.collectAsState()
@@ -189,8 +191,8 @@ fun SessionControlScreen(
         viewModel.setBlePermissionsGranted(permissions.values.all { it })
     }
 
-    // Low signal warning
-    val respirationLowSignalWarning by viewModel.respirationLowSignalWarning.collectAsState()
+    // Respiration warning (signal lost / no breathing — mutually exclusive)
+    val respirationWarning by viewModel.respirationWarning.collectAsState()
 
     // Respiration disconnect reason (for error dialog)
     val respirationDisconnectReason by viewModel.respirationDisconnectReason.collectAsState()
@@ -410,30 +412,23 @@ fun SessionControlScreen(
     ) {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = session?.sessionCode ?: "New Session",
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isRecording) Color.White
-                            else MaterialTheme.colorScheme.onSurface
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        if (recordingUiState.recordingState != DataRecordingState.IDLE) {
-                            showBackDialog = true
-                        } else {
-                            onNavigateBack()
-                        }
-                    }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = if (isRecording) Color.White
-                                else MaterialTheme.colorScheme.onSurface
-                        )
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 12.dp, vertical = 12.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            com.biocap.app.presentation.components.BioCapTopBar(
+                title = session?.sessionCode ?: "New Session",
+                onNavigateBack = {
+                    if (recordingUiState.recordingState != DataRecordingState.IDLE) {
+                        showBackDialog = true
+                    } else {
+                        onNavigateBack()
                     }
                 },
                 actions = {
@@ -442,35 +437,18 @@ fun SessionControlScreen(
                         duration = recordingUiState.durationFormatted
                     )
                 },
-                colors = if (isRecording) {
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color(0xFFF44336)
-                    )
-                } else {
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
-                }
+                modifier = Modifier.padding(bottom = 4.dp)
             )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(12.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+
             // Readiness backup banner (only shows when a prerequisite is missing)
             ReadinessWarningCard(
                 missing = missingPrerequisites,
                 onFix = onReadinessFix
             )
 
-            // Low signal warning banner
-            if (respirationLowSignalWarning != LowSignalWarning.NONE) {
-                LowSignalWarningBanner(warningLevel = respirationLowSignalWarning)
+            // Respiration warning banner — one at a time; SIGNAL_LOST outranks NO_BREATHING
+            if (respirationWarning != RespirationWarning.NONE) {
+                RespirationWarningBanner(warning = respirationWarning)
             }
 
             // Sensor-lost-during-recording warning banner
@@ -497,6 +475,16 @@ fun SessionControlScreen(
             // brief drop; warn so the operator restores Bluetooth (don't pause the session).
             if (watchBatteryLevel != null && watchConnectionState != ConnectionState.CONNECTED) {
                 WatchLinkLostBanner()
+            }
+
+            // No-sensor warning during a scenario run: startManualRecording() self-guards on a
+            // connected sensor, so entering a scenario with none leaves the countdown idle and nothing
+            // recording. Tell the operator why (mirrors the setup-screen gate) instead of leaving a
+            // frozen countdown unexplained. Only in a real scenario run (not setup, which has its own
+            // gate), and only while nothing is recording — a mid-recording drop is covered by
+            // SensorLostDuringRecordingBanner above.
+            if (!setupMode && !anySensorConnected && !recordingUiState.isRecording) {
+                NoSensorConnectedBanner()
             }
 
             // Hero auto-return countdown: a scenario run's whole purpose is to hand back to the
@@ -594,9 +582,10 @@ fun SessionControlScreen(
                     } else {
                         scope.launch {
                             snackbarHostState.showSnackbar(
-                                message = "Bluetooth is on. Make sure the watch's Wave app is " +
-                                    "running and tracking.",
-                                duration = SnackbarDuration.Short
+                                message = "Bluetooth is on — nothing more to do on this device. " +
+                                    "Open the Wave app on the watch and tap Start; it connects here " +
+                                    "automatically.",
+                                duration = SnackbarDuration.Long
                             )
                         }
                     }
@@ -650,6 +639,7 @@ fun SessionControlScreen(
             if (setupMode) {
                 Button(
                     onClick = onProceed,
+                    enabled = anySensorConnected,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Proceed to scenarios")
@@ -658,6 +648,17 @@ fun SessionControlScreen(
                         imageVector = Icons.Default.SkipNext,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp)
+                    )
+                }
+                if (!anySensorConnected) {
+                    Text(
+                        text = "Connect at least one sensor to continue.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp)
                     )
                 }
             }
@@ -828,40 +829,38 @@ private fun RecordingBadge(
         label = "rec_badge_alpha"
     )
 
-    Row(
-        modifier = Modifier.padding(end = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    val recording = recordingState == DataRecordingState.RECORDING
+    val accent = if (recording) com.biocap.app.ui.theme.CriticalRed else com.biocap.app.ui.theme.WarningAmber
+    val accentInk = if (recording) com.biocap.app.ui.theme.CriticalRedInk else com.biocap.app.ui.theme.WarningAmberInk
+
+    androidx.compose.material3.Surface(
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(999.dp),
+        color = accent.copy(alpha = 0.12f)
     ) {
-        Box(
-            modifier = Modifier
-                .size(10.dp)
-                .alpha(if (recordingState == DataRecordingState.RECORDING) pulseAlpha else 1f)
-                .background(
-                    color = if (recordingState == DataRecordingState.RECORDING)
-                        Color.White
-                    else
-                        Color(0xFFFFA000),
-                    shape = CircleShape
-                )
-        )
-        Text(
-            text = if (recordingState == DataRecordingState.RECORDING) "REC" else "IDLE",
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = if (recordingState == DataRecordingState.RECORDING)
-                Color.White
-            else
-                MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = duration,
-            style = MaterialTheme.typography.labelSmall,
-            color = if (recordingState == DataRecordingState.RECORDING)
-                Color.White.copy(alpha = 0.9f)
-            else
-                MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .alpha(if (recording) pulseAlpha else 1f)
+                    .background(color = accent, shape = CircleShape)
+            )
+            Text(
+                text = if (recording) "REC" else "IDLE",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = accentInk
+            )
+            Text(
+                text = duration,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
+                color = accentInk
+            )
+        }
     }
 }
 
@@ -1178,6 +1177,48 @@ private fun SensorLostDuringRecordingBanner(sensorNames: List<String>) {
                 Text(
                     text = "Recording continues — reconnect to resume data capture",
                     color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Shown on a scenario run when no sensor is connected: the recording + auto-return countdown are
+ * both gated on a connected sensor ([SessionControlViewModel.startManualRecording]), so without one
+ * nothing starts. Explains the otherwise-silent idle state so the operator knows to connect a sensor.
+ */
+@Composable
+private fun NoSensorConnectedBanner() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Sensors,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(
+                    text = "No sensor connected",
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Recording and the countdown won't start until at least one sensor is " +
+                        "connected. Connect one above to begin this scenario.",
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                     style = MaterialTheme.typography.bodySmall
                 )
             }

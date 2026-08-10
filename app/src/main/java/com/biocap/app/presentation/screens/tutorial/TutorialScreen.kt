@@ -82,8 +82,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -107,6 +105,8 @@ import com.biocap.app.data.sensor.DeviceState
 import com.biocap.app.data.sensor.ble.model.BleDevice
 import com.biocap.app.data.sensor.watch.WatchLinkStatus
 import com.biocap.app.presentation.screens.sensors.components.BleDeviceItem
+import com.biocap.app.ui.theme.StatusGreen
+import com.biocap.app.ui.theme.WarningAmber
 import android.media.MediaPlayer
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -243,10 +243,12 @@ private val TUTORIAL_SLIDES = listOf(
 // Phase accent colors
 // ─────────────────────────────────────────────────────────────────────────────
 
-private val PhaseColorHR      = Color(0xFFE57373)   // Red 300        — Heart Rate
-private val PhaseColorResp    = Color(0xFF4DB6AC)   // Teal 300       — Respiration
-private val PhaseColorWatch   = Color(0xFF64B5F6)   // Blue 300       — Galaxy Watch
-private val PhaseColorDefault = Color(0xFF9575CD)   // Deep Purple 300 — Welcome / Complete
+// Brand-harmonized section colors (wayfinding across the 12 steps), from the shared palette:
+// terracotta = heart rate, sage = breathing, slate = watch, gold = welcome/complete.
+private val PhaseColorHR      = com.biocap.app.ui.theme.SectionHeartRate
+private val PhaseColorResp    = com.biocap.app.ui.theme.SectionBreathing
+private val PhaseColorWatch   = com.biocap.app.ui.theme.SectionWatch
+private val PhaseColorDefault = com.biocap.app.ui.theme.Gold
 
 private fun phaseAccentColor(phase: SlidePhase): Color = when (phase) {
     SlidePhase.HEART_RATE      -> PhaseColorHR
@@ -259,7 +261,7 @@ private fun phaseAccentColor(phase: SlidePhase): Color = when (phase) {
 @Composable
 fun TutorialScreen(
     onNavigateBack: () -> Unit,
-    onNavigateToSessions: () -> Unit,
+    onStartSession: () -> Unit,
     viewModel: TutorialViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -331,27 +333,49 @@ fun TutorialScreen(
         contract = ActivityResultContracts.StartActivityForResult()
     ) { viewModel.recheckLocationEnabled() }
 
+    // Readiness re-derive on resume — catches a battery/notification setting fixed via the finish
+    // step's card (or an OEM revocation) so the "Go to Sessions" gate reflects live OS state.
+    androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshReadiness()
+    }
+
+    // Fix launchers for the finish-step readiness card (mirrors HomeScreen's onFix flow).
+    val notificationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) com.biocap.app.presentation.components.onPermissionDenied(
+            context, Manifest.permission.POST_NOTIFICATIONS
+        )
+        viewModel.refreshReadiness()
+    }
+    val onReadinessFix: (com.biocap.app.data.system.SessionPrerequisite) -> Unit = { prerequisite ->
+        when (prerequisite) {
+            com.biocap.app.data.system.SessionPrerequisite.NOTIFICATIONS ->
+                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            com.biocap.app.data.system.SessionPrerequisite.MICROPHONE ->
+                audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            com.biocap.app.data.system.SessionPrerequisite.BLUETOOTH ->
+                blePermissionLauncher.launch(blePermissions)
+            com.biocap.app.data.system.SessionPrerequisite.BATTERY_OPTIMIZATION ->
+                com.biocap.app.service.BatteryOptimizationHelper.openExemptionSettings(context)
+        }
+    }
+
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Tutorial") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            com.biocap.app.presentation.components.BioCapTopBar(
+                title = "Tutorial",
+                subtitle = "Sensor setup guide",
+                onNavigateBack = onNavigateBack,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            )
             // Progress bar
             PhaseProgressHeader(
                 currentStep = uiState.currentStep,
@@ -404,7 +428,12 @@ fun TutorialScreen(
                             enableBluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
                         }
                     )
-                    SlideType.COMPLETE -> TutorialCompleteStep(onGoToTests = onNavigateToSessions)
+                    SlideType.COMPLETE -> TutorialCompleteStep(
+                        onGoToSessions = onStartSession,
+                        missingPrerequisites = uiState.missingPrerequisites,
+                        canStartSession = uiState.canStartSession,
+                        onReadinessFix = onReadinessFix
+                    )
                 }
             }
 
@@ -909,7 +938,7 @@ private fun TutorialPulseConnectStep(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF4CAF50).copy(alpha = 0.15f)
+                        containerColor = StatusGreen.copy(alpha = 0.15f)
                     )
                 ) {
                     Row(
@@ -920,7 +949,7 @@ private fun TutorialPulseConnectStep(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = null,
-                            tint = Color(0xFF4CAF50),
+                            tint = StatusGreen,
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
@@ -1169,7 +1198,7 @@ private fun TutorialRespirationConnectStep(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF4CAF50).copy(alpha = 0.15f)
+                        containerColor = StatusGreen.copy(alpha = 0.15f)
                     )
                 ) {
                     Row(
@@ -1180,7 +1209,7 @@ private fun TutorialRespirationConnectStep(
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = null,
-                            tint = Color(0xFF4CAF50),
+                            tint = StatusGreen,
                             modifier = Modifier.size(24.dp)
                         )
                         Text(
@@ -1385,8 +1414,8 @@ private fun WatchStatusCard(
     }
     val dotColor by animateColorAsState(
         targetValue = when (linkStatus) {
-            WatchLinkStatus.LIVE -> Color(0xFF4CAF50)
-            WatchLinkStatus.DOZING -> Color(0xFFFFA000)
+            WatchLinkStatus.LIVE -> StatusGreen
+            WatchLinkStatus.DOZING -> WarningAmber
             WatchLinkStatus.DISCONNECTED -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
         },
         animationSpec = tween(300),
@@ -1448,7 +1477,12 @@ private fun WatchStatusCard(
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun TutorialCompleteStep(onGoToTests: () -> Unit) {
+private fun TutorialCompleteStep(
+    onGoToSessions: () -> Unit,
+    missingPrerequisites: Set<com.biocap.app.data.system.SessionPrerequisite>,
+    canStartSession: Boolean,
+    onReadinessFix: (com.biocap.app.data.system.SessionPrerequisite) -> Unit
+) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val pad = if (maxWidth < 600.dp) 16.dp else 24.dp
         Column(
@@ -1465,7 +1499,7 @@ private fun TutorialCompleteStep(onGoToTests: () -> Unit) {
                 imageVector = Icons.Default.CheckCircle,
                 contentDescription = null,
                 modifier = Modifier.size(80.dp),
-                tint = Color(0xFF4CAF50)
+                tint = StatusGreen
             )
 
             Text(
@@ -1482,15 +1516,33 @@ private fun TutorialCompleteStep(onGoToTests: () -> Unit) {
                 textAlign = TextAlign.Center
             )
 
+            // Blocking prerequisites (battery/notifications) must be fixed here before the operator
+            // can create a session — a session started without them can't record reliably yet can't
+            // be ended from the setup gate. Card renders nothing when everything's already granted.
+            com.biocap.app.presentation.components.ReadinessWarningCard(
+                missing = missingPrerequisites,
+                onFix = onReadinessFix
+            )
+
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                onClick = onGoToTests,
+                onClick = onGoToSessions,
+                enabled = canStartSession,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Icon(Icons.Default.PlayArrow, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Go to Tests")
+                Text("Go to Sessions")
+            }
+
+            if (!canStartSession) {
+                Text(
+                    text = "Fix the warnings above to continue",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
             }
 
             Text(
@@ -1539,8 +1591,8 @@ private fun DeviceStatusCard(
 
     val dotColor by animateColorAsState(
         targetValue = when {
-            isConnected -> Color(0xFF4CAF50)
-            isConnecting -> Color(0xFFFFA000)
+            isConnected -> StatusGreen
+            isConnecting -> WarningAmber
             else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
         },
         animationSpec = tween(300),

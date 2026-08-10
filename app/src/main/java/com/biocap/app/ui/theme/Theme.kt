@@ -1,56 +1,47 @@
 package com.biocap.app.ui.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Teal80,
-    secondary = TealGrey80,
-    tertiary = Green80
-)
-
+// Light (Parchment): warm ivory ground, navy primary action, gold accent — matches the logo.
+// Dynamic color is intentionally OFF: the brand palette is the identity here, and letting the OEM
+// wallpaper recolor the surface would drown the navy/gold logo (the very issue this design fixes).
 private val LightColorScheme = lightColorScheme(
-    primary = Teal40,
-    secondary = TealGrey40,
-    tertiary = Green40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = Navy,
     onPrimary = Color.White,
+    primaryContainer = Navy,
+    onPrimaryContainer = Color.White,
+
+    secondary = GoldDeep,
     onSecondary = Color.White,
+    secondaryContainer = GoldSoft,
+    onSecondaryContainer = Navy,
+
+    tertiary = GoldDeep,
     onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    tertiaryContainer = GoldSoft,
+    onTertiaryContainer = Navy,
+
+    background = Ivory,
+    onBackground = Navy,
+    surface = Ivory,
+    onSurface = Navy,
+    surfaceVariant = CardWhite,
+    onSurfaceVariant = InkSubtle,
+    outline = CardBorder,
+    outlineVariant = CardBorder,
 )
 
 @Composable
 fun BioCapTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
+    // The BioCap identity is the Parchment (light) design; the app is intentionally light-only, so
+    // the operator UI is identical on every device regardless of the system dark-mode setting.
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = LightColorScheme,
         typography = Typography,
         content = content
     )

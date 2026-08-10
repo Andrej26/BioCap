@@ -3,7 +3,12 @@
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -24,22 +29,25 @@ import androidx.compose.material.icons.filled.Battery4Bar
 import androidx.compose.material.icons.filled.Battery5Bar
 import androidx.compose.material.icons.filled.Battery6Bar
 import androidx.compose.material.icons.filled.BatteryFull
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.biocap.app.data.model.ConnectionState
 import com.biocap.app.presentation.components.ConnectionStatusBadge
+import com.biocap.app.ui.theme.CardBorder
+import com.biocap.app.ui.theme.CriticalRed
+import com.biocap.app.ui.theme.StatusGreen
+import com.biocap.app.ui.theme.WarningAmber
 
 @Composable
 fun DeviceSensorGroup(
@@ -58,34 +66,56 @@ fun DeviceSensorGroup(
     // CONNECTED, so the tap target lines up with "not actually connected".
     val isClickable = onClick != null &&
             (connectionState == ConnectionState.DISCONNECTED || connectionState == ConnectionState.ERROR)
-    val borderColor by animateColorAsState(
+    // Slim left rail encodes the connection state (green/amber/red/gray) on the white AppCard.
+    val railColor by animateColorAsState(
         targetValue = when (connectionState) {
-            ConnectionState.CONNECTED -> Color(0xFF4CAF50)
-            ConnectionState.CONNECTING -> Color(0xFFFFA000)
-            ConnectionState.RECONNECTING -> Color(0xFFFFA000)
-            ConnectionState.ERROR -> Color(0xFFF44336)
+            ConnectionState.CONNECTED -> StatusGreen
+            ConnectionState.CONNECTING -> WarningAmber
+            ConnectionState.RECONNECTING -> WarningAmber
+            ConnectionState.ERROR -> CriticalRed
             ConnectionState.DISCONNECTED -> MaterialTheme.colorScheme.outlineVariant
         },
         animationSpec = tween(300),
-        label = "device_group_border"
+        label = "device_group_rail"
     )
 
-    Card(
+    // A disconnected, tappable group gets a dashed primary border — the same "empty slot to fill"
+    // affordance as the disconnected LiveSensorCard, so the tap-here language is unified across the
+    // screen. The colored left rail still carries the connection state underneath.
+    val groupShape = RoundedCornerShape(16.dp)
+    Surface(
         modifier = modifier
             .fillMaxWidth()
+            .height(IntrinsicSize.Min)
             .then(
-                if (isClickable) Modifier.clickable { onClick?.invoke() }
+                if (isClickable) Modifier.clickable { onClick() }
                 else Modifier
+            )
+            .then(
+                if (isClickable) Modifier.dashedBorder(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = groupShape,
+                    strokeWidth = 2.dp,
+                    dashLength = 6.dp,
+                    gapLength = 4.dp
+                ) else Modifier
             ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        border = BorderStroke(1.5.dp, borderColor)
+        shape = groupShape,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = if (isClickable) null else BorderStroke(1.dp, CardBorder)
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            // Colored state rail.
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(4.dp)
+                    .background(railColor)
+            )
+            Column(
+                modifier = Modifier.padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -128,11 +158,8 @@ fun DeviceSensorGroup(
             footer?.invoke(this)
 
             if (isClickable && clickHint != null) {
-                Text(
-                    text = clickHint,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-                )
+                TapActionPill(text = clickHint, compact = true)
+            }
             }
         }
     }

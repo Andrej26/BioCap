@@ -493,15 +493,24 @@ permissions on the tablet — it only receives messages and DataItems.
 
 | File | Role |
 |------|------|
-| [wear/.../WatchSensorService.kt](../wear/src/main/java/com/biocap/wear/WatchSensorService.kt) | Foreground `health` service; owns the Samsung SDK, registers trackers, runs the `flush()` loop, sends `STOP` |
+| [wear/.../WatchSensorService.kt](../wear/src/main/java/com/biocap/wear/WatchSensorService.kt) | Foreground `health` service; owns the Samsung SDK, registers trackers, runs the `flush()` loop + heartbeat; `emit()` persists to the store **and** streams live |
+| [wear/.../WatchSampleStore.kt](../wear/src/main/java/com/biocap/wear/WatchSampleStore.kt) | Append-only JSON-lines durable store; truncate-after-ack |
+| [wear/.../WatchCommandListenerService.kt](../wear/src/main/java/com/biocap/wear/WatchCommandListenerService.kt) | `WearableListenerService` on the watch; handles `START`/`FLUSH`/`STOP`/`FLUSH_ACK` from the phone |
+| [wear/.../WatchFlushWriter.kt](../wear/src/main/java/com/biocap/wear/WatchFlushWriter.kt) | Pushes stored rows to the phone as chunked `DataClient` DataItems |
 | [wear/.../WatchDataSender.kt](../wear/src/main/java/com/biocap/wear/WatchDataSender.kt) | `MessageClient` sender; resolves & caches the `biocap_phone` node |
-| [wear/.../WatchMessage.kt](../wear/src/main/java/com/biocap/wear/WatchMessage.kt) | Builds the JSON lines (`reading`, `capabilities`, `batch`, `stop`) |
+| [wear/.../WatchMessage.kt](../wear/src/main/java/com/biocap/wear/WatchMessage.kt) | Builds the JSON lines (`reading`, `capabilities`, `batch`, `stop`, `heartbeat`) |
 | [wear/.../MainActivity.kt](../wear/src/main/java/com/biocap/wear/MainActivity.kt) | Minimal Start/Stop watch UI; requests runtime permissions |
-| [app/.../data/sensor/watch/WatchListenerService.kt](../app/src/main/java/com/biocap/app/data/sensor/watch/WatchListenerService.kt) | `WearableListenerService`; parses messages → receiver |
-| [app/.../data/sensor/watch/WatchSensorReceiver.kt](../app/src/main/java/com/biocap/app/data/sensor/watch/WatchSensorReceiver.kt) | Hilt singleton sink; exposes flows; inferred connection state + watchdog |
+| [app/.../data/sensor/watch/WatchListenerService.kt](../app/src/main/java/com/biocap/app/data/sensor/watch/WatchListenerService.kt) | `WearableListenerService`; parses live messages + ingests flush DataItems (`onDataChanged`) |
+| [app/.../data/sensor/watch/WatchSensorReceiver.kt](../app/src/main/java/com/biocap/app/data/sensor/watch/WatchSensorReceiver.kt) | Hilt singleton sink; exposes flows; `linkStatus` + flush handshake + timestamp correction |
+| [app/.../data/sensor/watch/WatchCommandSender.kt](../app/src/main/java/com/biocap/app/data/sensor/watch/WatchCommandSender.kt) | Phone→watch commands (`START`/`FLUSH`/`STOP`/`FLUSH_ACK`); interface + impl |
+| [app/.../data/sensor/watch/WatchBatteryThresholds.kt](../app/src/main/java/com/biocap/app/data/sensor/watch/WatchBatteryThresholds.kt) | Low-battery warning tiers (`WARNING`/`CRITICAL`) |
 | [app/.../data/sensor/watch/model/WatchReading.kt](../app/src/main/java/com/biocap/app/data/sensor/watch/model/WatchReading.kt) | `WatchReading(type, value, accuracy, t)` |
+| [app/.../data/recording/WatchSessionDrainer.kt](../app/src/main/java/com/biocap/app/data/recording/WatchSessionDrainer.kt) | Splits session-long watch readings into per-scenario windows (with de-dup) |
+| [app/.../data/recording/WatchReconciliationReport.kt](../app/src/main/java/com/biocap/app/data/recording/WatchReconciliationReport.kt) | End-session flush verification (claimed vs. received vs. stored) |
 | [app/.../presentation/screens/sensors/watch/WatchSensorScreen.kt](../app/src/main/java/com/biocap/app/presentation/screens/sensors/watch/WatchSensorScreen.kt) | Sensors → Galaxy Watch live-readings screen |
 | [app/.../presentation/screens/sensors/watch/WatchSensorViewModel.kt](../app/src/main/java/com/biocap/app/presentation/screens/sensors/watch/WatchSensorViewModel.kt) | Reads receiver flows for the screen; also tracks the **phone's Bluetooth adapter** state (`ACTION_STATE_CHANGED` receiver → `bluetoothEnabled` flow) |
+| [app/.../presentation/screens/sessions/components/EndSessionWatchDialog.kt](../app/src/main/java/com/biocap/app/presentation/screens/sessions/components/EndSessionWatchDialog.kt) | End-session wake/transfer state-machine UI |
+| [app/.../presentation/components/WatchBatteryWarningCard.kt](../app/src/main/java/com/biocap/app/presentation/components/WatchBatteryWarningCard.kt) | Low-battery warning banner driven by `WatchBatteryThresholds` |
 | [app/.../presentation/components/BluetoothDisabledCard.kt](../app/src/main/java/com/biocap/app/presentation/components/BluetoothDisabledCard.kt) | Reusable "Bluetooth Disabled — tap to enable" warning card, shared with the eSense Pulse screen |
 
 ### Phone-side Bluetooth warning (UI)
@@ -519,9 +528,12 @@ on the watch by `WatchDataSender` (see *Transport*).
 | Flow | Type | Purpose |
 |------|------|---------|
 | `connectionState` | `StateFlow<ConnectionState>` | inferred CONNECTED/DISCONNECTED (also via `ConnectionRepository.watchConnectionState`) |
+| `linkStatus` | `StateFlow<WatchLinkStatus>` | `LIVE` / `DOZING` / `DISCONNECTED` — a reading means LIVE, the ~30 s heartbeat means DOZING, so expected Doze gaps read as "buffering" rather than a false disconnect |
 | `latestByType` | `StateFlow<Map<String, WatchReading>>` | most recent reading per signal (HR/IBI/EDA/BATTERY) |
 | `availableTrackers` | `StateFlow<List<String>>` | trackers the watch reports as supported |
-| `batteryLevel` | `StateFlow<Int?>` | watch battery % |
+| `flushState` | `StateFlow<WatchFlushState>` | `Idle` / `InProgress(received, expected)` / `Complete(rowsReceived, maxWatchTimestampMs)` — drives the end-session dialog; `maxWatchTimestampMs` is the `FLUSH_ACK` truncation point |
+| `batteryLevel` | `StateFlow<Int?>` | watch battery % (feeds `currentBatteryAlert()`) |
+| `watchSampleFlow` | `SharedFlow<WatchReading>` | live sample stream consumed by the recording layer (bounded, 256 slots — historical flush rows deliberately bypass it) |
 
 ### Recording / Database Integration (implemented 2026-06)
 
@@ -529,8 +541,10 @@ Watch readings are recorded to the DB and export. Each `SensorType` maps to **ex
 sensor** so HR from the watch and the eSense Pulse (recorded simultaneously) never merge — wire types
 `WATCH_HR`/`WATCH_IBI`/`WATCH_EDA` map to **`SensorType.WATCH_HR`**, **`SensorType.WATCH_IBI`** (a
 distinct value so watch HRV is attributable vs. eSense RR), and **`SensorType.WATCH_EDA`**; the eSense
-Pulse uses **`SensorType.ESENSE_HEART_RATE`**. The DB is at version 3 (v3 split per-device HR/EDA;
-`accuracy` is intentionally dropped at ingest — not a DB column); enums store as strings under
+Pulse uses **`SensorType.ESENSE_HEART_RATE`**. The per-device HR/EDA split landed in DB **v3** (the DB
+is at **v6** today — later bumps were unrelated to the watch: v4 added the watch sample counters, v5
+dropped the reaction-time/VR fields, v6 renamed the scenario codes);
+`accuracy` is intentionally dropped at ingest — not a DB column. Enums store as strings under
 `fallbackToDestructiveMigration`, so the rename needed no hand-written `Migration` (the destructive
 fallback wipes old local rows, which are already exported/uploaded). Export maps each type to a
 distinct lowercase string (`watch_hr`/`watch_ibi`/`watch_eda`/`esense_heart_rate`) in both JSON
@@ -538,6 +552,94 @@ distinct lowercase string (`watch_hr`/`watch_ibi`/`watch_eda`/`esense_heart_rate
 session-long buffer + `WatchSessionDrainer` (per-(scenario,type) timestamp-window attribution, with
 high-water-mark de-dup against live-written rows) handle live readings and flushed history identically.
 See **Store-and-Forward + Remote Flush**.
+
+### End-Session Transfer UI (`EndSessionWatchDialog`)
+
+The flush handshake is invisible plumbing; this dialog is the operator-facing face of it. Ending a
+session with a watch in play drives a phase machine (`EndSessionPhase` in `SessionControlViewModel`),
+and the dialog renders one screen per phase:
+
+| Phase | Shown as | Escape hatch |
+|---|---|---|
+| `Idle` | nothing (no watch involved) | — |
+| `AwaitingWatchWake` | "Wake your watch" + spinner — asks the operator to tap the watch screen | *End without watch data* |
+| `Transferring(received, expected)` | "Receiving data from watch… Received N of M" | *End without watch data* |
+| `Finalizing` | "Saving… Splitting and saving the recorded data." | — (short, non-interruptible) |
+| `Complete(sessionId)` | green check + the reconciliation summary, then auto-navigates to review | — |
+| `Failed(reason)` | "Watch transfer didn't finish" | *Retry* or *End without watch data* |
+
+**Timeouts** (constants in `SessionControlViewModel`): the wake wait is **60 s**
+(`WATCH_WAKE_TIMEOUT_MS`), the transfer **30 s** (`WATCH_TRANSFER_TIMEOUT_MS`). Either expiring lands
+on `Failed` rather than hanging — the flow can never deadlock the operator.
+
+The dialog is **non-cancellable** (no tap-outside dismiss). That is deliberate: an accidental dismiss
+mid-transfer would look like success while silently abandoning data. The only ways out are completion,
+*Retry*, or the explicit *End without watch data*.
+
+**Ending without watch data is not data loss.** The watch only truncates its store after the phone
+acks (see *Store-and-Forward*), so an abandoned transfer leaves the rows durable on the watch — they
+can be pulled in a later session. The `Failed` copy says exactly this.
+
+On `Complete` the result is held briefly before navigating to review — **1.5 s** normally, **3× that**
+on a reconciliation mismatch so the operator has time to actually read the warning.
+
+### Flush Verification (`WatchReconciliationReport`)
+
+A completed transfer is not the same as correct data, so the session-end drain produces a report
+rather than trusting the export blindly. It compares four counts:
+
+| Field | Meaning |
+|---|---|
+| `claimed` | rows the watch said it had (`FLUSH_COMPLETE` rowCount) |
+| `received` | rows the phone actually buffered — `received == claimed` is the **transport** check |
+| `inScenario` | flush rows whose corrected timestamp fell inside a scenario window (the study data) |
+| `dbRows` | watch-type rows persisted for the session after finalize — `dbRows == inScenario` is the **attribution** check |
+
+```kotlin
+val ok = received == claimed && dbRows == inScenario
+val betweenScenario = received - inScenario   // recorded in gaps between scenarios; intentionally dropped
+```
+
+`betweenScenario > 0` is **normal**, not an error — the watch samples continuously across the whole
+session, including while the operator is between scenarios, and those rows have no scenario to belong
+to.
+
+On the authoritative-rebuild path `ok` holds *by construction* (the DB is rebuilt from the flush), so
+a mismatch there means a genuine attribution/coding bug. That is precisely why it is surfaced in the
+UI instead of logged and forgotten.
+
+**Clock-skew warning:** `clockSkewMs` is the minimum observed `(arrival − captureTime)` across live
+readings. Beyond `CLOCK_SKEW_WARN_MS` (**3 s**) `clockSkewSuspect` flips — usually meaning the watch
+has automatic time off. It is a **non-blocking warning and never a correction**: timestamps are lifted
+onto the NTP timeline by a constant offset, not by a per-connection captured delta (which proved
+fragile — a single sample, poisonable by a Doze burst).
+
+`summary()` renders the one-line operator string shown in the `Complete` dialog:
+
+```
+Watch: 3412 recorded · 3180 in-scenario · 232 between · DB 3180 · OK · skew 140ms
+```
+
+### Low-Battery Warning (`WatchBatteryThresholds`)
+
+| Tier | Level | Banner |
+|---|---|---|
+| `WARNING` | ≤ **20 %** | amber — "charge as soon as possible" |
+| `CRITICAL` | ≤ **10 %** | red, pulsing — "may stop recording / lose data — charge before a new session" |
+
+Surfaced by `WatchBatteryWarningCard` and evaluated via
+`ConnectionRepository.watchBatteryAlert()` → `WatchSensorReceiver.currentBatteryAlert()`.
+
+**Where it is shown matters:** the alert is a snapshot taken on the **Home screen, between sessions** —
+never during a running scenario. Popping a warning mid-scenario would inject a stimulus into exactly
+the physiological data being recorded.
+
+**What the thresholds are actually protecting against** is *not* the battery percentage itself. The
+real failure mode is the watch enabling Power Saving / "Limit health features", which **turns off
+background sensor sampling** outright. Measured 2026-06-15: with Power Saving off the watch recorded
+gaplessly down to 4 %, while an earlier run with Power Saving auto-on lost screen-off data around 7 %.
+The percentages are therefore an operator nudge to charge *before* Power Saving can trigger — retune
+them in `WatchBatteryThresholds`, which exists solely to keep them in one place.
 
 ## Troubleshooting and Edge Cases
 

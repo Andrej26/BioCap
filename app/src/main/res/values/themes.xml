@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.BioCap" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Light-only app theme: the ivory window background prevents a white/gray flash before the
+         Compose Parchment UI draws. Dark status-bar icons since the ground is light. -->
+    <style name="Theme.BioCap" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/biocap_ivory</item>
+        <item name="android:statusBarColor">@color/biocap_ivory</item>
+        <item name="android:navigationBarColor">@color/biocap_ivory</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
 </resources>

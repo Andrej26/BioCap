@@ -11,12 +11,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BatteryAlert
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,6 +27,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.biocap.app.data.sensor.watch.WatchBatteryAlert
+import com.biocap.app.ui.theme.CriticalRed
+import com.biocap.app.ui.theme.WarningAmber
 
 /**
  * Persistent (while shown) low-battery banner for the Galaxy Watch, hosted at the top of Home so
@@ -43,8 +45,8 @@ fun WatchBatteryWarningCard(
     if (alert == WatchBatteryAlert.NONE) return
 
     val isCritical = alert == WatchBatteryAlert.CRITICAL
-    val backgroundColor = if (isCritical) MaterialTheme.colorScheme.error else Color(0xFFFFA000)
-    val contentColor = if (isCritical) MaterialTheme.colorScheme.onError else Color.White
+    val backgroundColor = if (isCritical) CriticalRed else WarningAmber
+    val contentColor = Color.White
     val pct = level?.let { "$it%" } ?: ""
     val text = if (isCritical) {
         "Galaxy Watch battery critically low${if (pct.isEmpty()) "" else " ($pct)"} — at this level the watch may stop recording sensor data while the screen is off and that data will be lost. Do not start a new session without charging the watch."
@@ -64,14 +66,15 @@ fun WatchBatteryWarningCard(
         label = "watchBatteryAlpha"
     )
 
-    Card(
+    Surface(
         modifier = modifier
             .fillMaxWidth()
             .alpha(alpha),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+        shape = RoundedCornerShape(16.dp),
+        color = backgroundColor
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(13.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(

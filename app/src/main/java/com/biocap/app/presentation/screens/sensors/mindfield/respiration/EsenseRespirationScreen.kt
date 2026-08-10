@@ -45,8 +45,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -63,10 +61,10 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.biocap.app.data.model.ConnectionState
 import com.biocap.app.data.sensor.DeviceState
-import com.biocap.app.data.sensor.audio.LowSignalWarning
+import com.biocap.app.data.sensor.audio.RespirationWarning
 import com.biocap.app.presentation.components.BioSensorCard
 import com.biocap.app.presentation.components.ConnectionStatusBadge
-import com.biocap.app.presentation.components.LowSignalWarningBanner
+import com.biocap.app.presentation.components.RespirationWarningBanner
 import com.biocap.app.presentation.log.LogEntry
 import com.biocap.app.presentation.log.LogType
 
@@ -104,27 +102,7 @@ fun EsenseRespirationScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "eSense Respiration",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         BoxWithConstraints(
             modifier = Modifier
@@ -138,6 +116,12 @@ fun EsenseRespirationScreen(
                     .fillMaxSize()
                     .padding(horizontal = hPad)
             ) {
+                com.biocap.app.presentation.components.BioCapTopBar(
+                    title = "eSense Respiration",
+                    subtitle = "Breathing sensor · audio jack",
+                    onNavigateBack = onNavigateBack,
+                    modifier = Modifier.padding(vertical = 12.dp)
+                )
                 // Scrollable upper section (sensor info + controls)
                 Column(
                     modifier = Modifier
@@ -150,9 +134,9 @@ fun EsenseRespirationScreen(
                     // Sensor Info Card
                     SensorInfoCard(state = uiState.state)
 
-                    // Low signal warning banner
-                    if (uiState.lowSignalWarning != LowSignalWarning.NONE) {
-                        LowSignalWarningBanner(warningLevel = uiState.lowSignalWarning)
+                    // Respiration warning banner — one at a time
+                    if (uiState.warning != RespirationWarning.NONE) {
+                        RespirationWarningBanner(warning = uiState.warning)
                     }
 
                     // Permission Card (if not granted)

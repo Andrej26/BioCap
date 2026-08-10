@@ -10,18 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,7 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.biocap.app.data.model.ConnectionState
+import com.biocap.app.presentation.components.BioCapTopBar
 import com.biocap.app.presentation.components.SensorTypeCard
+import com.biocap.app.ui.theme.EyebrowGold
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,28 +41,10 @@ fun SensorsScreen(
     val watchConnectionState by viewModel.watchConnectionState.collectAsState()
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Sensors",
-                        fontWeight = FontWeight.SemiBold
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
-            )
-        }
+        containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
+        val connectedCount = listOf(bleConnectionState, respirationState.toConnectionState(), watchConnectionState)
+            .count { it == ConnectionState.CONNECTED }
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
@@ -76,16 +56,21 @@ fun SensorsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = hPad, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(horizontal = hPad, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(11.dp)
             ) {
-                Text(
-                    text = "Available Sensors",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                BioCapTopBar(
+                    title = "Sensors",
+                    subtitle = "$connectedCount of 3 connected",
+                    onNavigateBack = onNavigateBack
                 )
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "AVAILABLE SENSORS",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = EyebrowGold
+                )
 
                 SensorTypeCard(
                     name = "eSense Pulse",

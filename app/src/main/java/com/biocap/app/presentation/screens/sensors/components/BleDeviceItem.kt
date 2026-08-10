@@ -16,8 +16,6 @@ import androidx.compose.material.icons.filled.NetworkWifi
 import androidx.compose.material.icons.filled.NetworkWifi3Bar
 import androidx.compose.material.icons.filled.NetworkWifi2Bar
 import androidx.compose.material.icons.filled.NetworkWifi1Bar
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,6 +27,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.biocap.app.data.sensor.ble.model.BleDevice
 import com.biocap.app.data.sensor.ble.model.SignalStrength
+import com.biocap.app.presentation.components.AppCard
+import com.biocap.app.presentation.components.AppIconBadge
+import com.biocap.app.ui.theme.CriticalRed
+import com.biocap.app.ui.theme.StatusGreen
+import com.biocap.app.ui.theme.WarningAmber
 
 /**
  * Composable that displays a single BLE device item in a list.
@@ -39,32 +42,18 @@ fun BleDeviceItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    AppCard(
+        onClick = onClick,
         modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(horizontal = 13.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Bluetooth icon
-            Icon(
-                imageVector = Icons.Default.Bluetooth,
-                contentDescription = null,
-                modifier = Modifier.size(32.dp),
-                tint = if (device.isConnectable) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
+            // Gold Bluetooth badge
+            AppIconBadge(icon = Icons.Default.Bluetooth)
 
             Spacer(modifier = Modifier.width(12.dp))
 
@@ -141,10 +130,10 @@ private fun SignalStrengthIcon(
     }
 
     val tint = when (signalStrength) {
-        SignalStrength.EXCELLENT -> MaterialTheme.colorScheme.primary
-        SignalStrength.GOOD -> MaterialTheme.colorScheme.primary
-        SignalStrength.FAIR -> MaterialTheme.colorScheme.secondary
-        SignalStrength.WEAK -> MaterialTheme.colorScheme.error
+        SignalStrength.EXCELLENT -> StatusGreen
+        SignalStrength.GOOD -> StatusGreen
+        SignalStrength.FAIR -> WarningAmber
+        SignalStrength.WEAK -> CriticalRed
     }
 
     Icon(

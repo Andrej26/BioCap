@@ -126,7 +126,7 @@ object AppModule {
             AppDatabase::class.java,
             "biocap_database"
         )
-            .fallbackToDestructiveMigration()
+            .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }
 
