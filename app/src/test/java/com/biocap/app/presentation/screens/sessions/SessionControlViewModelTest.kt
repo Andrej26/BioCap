@@ -193,7 +193,7 @@ class SessionControlViewModelTest {
 
         assertEquals(1, fakeScenarioRecordingRepo.startRecordingCallCount)
         assertEquals(1, fakeScenarioDao.scenarios.size)
-        assertEquals(ScenarioCode.REFERENCE_STATE, fakeScenarioDao.scenarios[0].scenarioCode)
+        assertEquals(ScenarioCode.BASELINE_CALIBRATION, fakeScenarioDao.scenarios[0].scenarioCode)
     }
 
     @Test
@@ -208,7 +208,7 @@ class SessionControlViewModelTest {
 
         assertEquals(1, fakeScenarioRecordingRepo.startRecordingCallCount)
         assertEquals(1, fakeScenarioDao.scenarios.size)
-        assertEquals(ScenarioCode.REFERENCE_STATE, fakeScenarioDao.scenarios[0].scenarioCode)
+        assertEquals(ScenarioCode.BASELINE_CALIBRATION, fakeScenarioDao.scenarios[0].scenarioCode)
     }
 
     @Test

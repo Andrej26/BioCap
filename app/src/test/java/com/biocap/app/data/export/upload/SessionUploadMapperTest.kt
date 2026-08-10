@@ -73,7 +73,7 @@ class SessionUploadMapperTest {
         val scenario = ScenarioEntity(
             id = 5L,
             sessionId = 1L,
-            scenarioCode = ScenarioCode.REFERENCE_STATE,
+            scenarioCode = ScenarioCode.BASELINE_CALIBRATION,
             startedAt = 1_790_509_820_000L,
             endedAt = null // abnormally ended scenarios count too
         )
@@ -115,7 +115,7 @@ class SessionUploadMapperTest {
         val scenario = ScenarioEntity(
             id = 5L,
             sessionId = 1L,
-            scenarioCode = ScenarioCode.REFERENCE_STATE,
+            scenarioCode = ScenarioCode.BASELINE_CALIBRATION,
             startedAt = 1_790_509_820_000L,
             endedAt = 1_790_509_880_000L
         )
@@ -124,7 +124,7 @@ class SessionUploadMapperTest {
         val s = request.scenarios.single()
 
         // Enum NAME, not officialCode "A1".
-        assertEquals("REFERENCE_STATE", s.scenarioCode)
+        assertEquals("BASELINE_CALIBRATION", s.scenarioCode)
         assertEquals(1_790_509_820_000L, s.startedAt)
         assertEquals(1_790_509_880_000L, s.endedAt)
     }
@@ -134,7 +134,7 @@ class SessionUploadMapperTest {
         val scenario = ScenarioEntity(
             id = 5L,
             sessionId = 1L,
-            scenarioCode = ScenarioCode.COGNITIVE_LOAD,
+            scenarioCode = ScenarioCode.HIGH_COGNITIVE_DEMAND,
             startedAt = 1_790_509_900_000L
         )
         sampleDao.samples.addAll(

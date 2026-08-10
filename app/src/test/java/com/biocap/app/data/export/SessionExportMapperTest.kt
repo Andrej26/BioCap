@@ -65,11 +65,11 @@ class SessionExportMapperTest {
 
     @Test
     fun buildScenarioExport_scenarioCodeEmittedAsString() {
-        val scenario = scenario(code = ScenarioCode.COGNITIVE_LOAD)
+        val scenario = scenario(code = ScenarioCode.HIGH_COGNITIVE_DEMAND)
 
         val result = mapper.buildScenarioExport(scenario, emptyList())
 
-        assertEquals("COGNITIVE_LOAD", result.scenarioCode)
+        assertEquals("HIGH_COGNITIVE_DEMAND", result.scenarioCode)
     }
 
     @Test
@@ -305,7 +305,7 @@ class SessionExportMapperTest {
     private fun scenario(
         id: Long? = null,
         sessionId: Long = 1L,
-        code: ScenarioCode = ScenarioCode.REFERENCE_STATE,
+        code: ScenarioCode = ScenarioCode.BASELINE_CALIBRATION,
         endedAt: Long? = 1_060_000L
     ): ScenarioEntity {
         val actualId = id ?: nextScenarioId++

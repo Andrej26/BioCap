@@ -3,6 +3,7 @@ package com.biocap.app.di
 import android.content.Context
 import androidx.room.Room
 import com.biocap.app.data.db.AppDatabase
+import com.biocap.app.data.db.MIGRATION_6_7
 import com.biocap.app.data.db.ParticipantDao
 import com.biocap.app.data.db.ScenarioDao
 import com.biocap.app.data.db.SensorSampleDao
@@ -126,6 +127,9 @@ object AppModule {
             AppDatabase::class.java,
             "biocap_database"
         )
+            // v6→v7 renames stored ScenarioCode strings in place so recorded sessions survive the
+            // upgrade; the destructive fallback stays as the catch-all for every other version jump.
+            .addMigrations(MIGRATION_6_7)
             .fallbackToDestructiveMigration(dropAllTables = true)
             .build()
     }

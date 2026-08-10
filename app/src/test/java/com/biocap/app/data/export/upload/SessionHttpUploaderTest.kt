@@ -63,7 +63,7 @@ class SessionHttpUploaderTest {
         )
         scenarioDao.scenarios.add(
             ScenarioEntity(
-                id = 10L, sessionId = sessionId, scenarioCode = ScenarioCode.REFERENCE_STATE,
+                id = 10L, sessionId = sessionId, scenarioCode = ScenarioCode.BASELINE_CALIBRATION,
                 startedAt = 2_000L
             )
         )

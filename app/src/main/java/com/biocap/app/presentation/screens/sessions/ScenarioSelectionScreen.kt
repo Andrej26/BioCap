@@ -52,7 +52,7 @@ import com.biocap.app.ui.theme.StatusGreenInk
 
 /**
  * Scenario picker that doubles as the session's home/hub: one vertically-centered button per
- * [ScenarioCode] (labelled with its `displayName`, e.g. "Scenario A – Reference State") opens the
+ * [ScenarioCode] (labelled with its `displayName`, e.g. "Scenario A – Baseline Calibration") opens the
  * session control screen for [sessionId] with the chosen scenario number (1-based, in declaration
  * order), and an **End Session & Save** action at the bottom finalizes the whole session
  * (with the watch-transfer handshake) and leaves for review. This is the screen operators return to

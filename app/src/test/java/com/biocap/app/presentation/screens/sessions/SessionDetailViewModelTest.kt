@@ -91,7 +91,7 @@ class SessionDetailViewModelTest {
         return session
     }
 
-    private fun seedScenario(id: Long, code: ScenarioCode = ScenarioCode.REFERENCE_STATE) {
+    private fun seedScenario(id: Long, code: ScenarioCode = ScenarioCode.BASELINE_CALIBRATION) {
         fakeScenarioDao.scenarios.add(
             ScenarioEntity(
                 id = id,
@@ -118,7 +118,7 @@ class SessionDetailViewModelTest {
     fun loadSession_populatesStateAndClearsLoading() = runTest {
         val session = seedSession()
         seedScenario(id = 10)
-        seedScenario(id = 11, code = ScenarioCode.COGNITIVE_LOAD)
+        seedScenario(id = 11, code = ScenarioCode.HIGH_COGNITIVE_DEMAND)
 
         val vm = newViewModel()
         advanceUntilIdle()

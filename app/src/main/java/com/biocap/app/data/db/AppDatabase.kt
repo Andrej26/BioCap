@@ -21,10 +21,13 @@ import androidx.room.TypeConverters
     //     removed; the app now records only sensor samples per scenario).
     // v6: renamed the nine industrial ScenarioCode values to the five biofeedback scenarios
     //     (REFERENCE_STATE/COGNITIVE_LOAD/DISTRACTING_ENVIRONMENT/LONG_TERM_FATIGUE/REACTION_TASKS).
-    // The DB uses fallbackToDestructiveMigration (see AppModule), so renamed enum values and added/
-    // removed columns need no hand-written Migration — the destructive fallback wipes the old local
-    // rows (sessions are already exported/uploaded), and values are stored as strings by Converters.
-    version = 6,
+    // v7: renamed those five to the study's final terminology (BASELINE_CALIBRATION/
+    //     HIGH_COGNITIVE_DEMAND/ENVIRONMENTAL_DISTRACTION/SUSTAINED_WORKLOAD/SENSORIMOTOR_RESPONSE).
+    //     Unlike the earlier bumps this one ships a real Migration (MIGRATION_6_7) that rewrites the
+    //     stored strings in place, because the affected rows are recorded sessions that must survive.
+    // The DB still keeps fallbackToDestructiveMigration (see AppModule) as the catch-all for older
+    // versions with no hand-written path; enum values are stored as strings by Converters.
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

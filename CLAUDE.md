@@ -446,14 +446,23 @@ com.biocap.wear/
 
 ## Database Schema
 
-Room database (version 6) with 4 entities. Cascade-delete on all foreign keys. Uses
-`fallbackToDestructiveMigration` (enums are stored as strings), so adding/removing a `SensorType`
-value or column is a version bump with no hand-written `Migration` — the destructive fallback wipes
-old local rows (sessions are already exported/uploaded). History: v2 added `WATCH_IBI`; v3 split
-per-device sensor types; v4 added the watch sample counters; v5 dropped the reaction-time/VR
-fields (`scenarioCategory`, `eventTimestampMs`, `reactionTimestampMs`) and `sessions.notes` for the
-biofeedback-only pivot; **v6** renamed the nine industrial scenario codes to the five biofeedback
-scenarios.
+Room database (version 7) with 4 entities. Cascade-delete on all foreign keys. Uses
+`fallbackToDestructiveMigration` (enums are stored as strings) as the catch-all, so adding/removing a
+`SensorType` value or column is a version bump with no hand-written `Migration` — the destructive
+fallback wipes old local rows (sessions are already exported/uploaded). History: v2 added
+`WATCH_IBI`; v3 split per-device sensor types; v4 added the watch sample counters; v5 dropped the
+reaction-time/VR fields (`scenarioCategory`, `eventTimestampMs`, `reactionTimestampMs`) and
+`sessions.notes` for the biofeedback-only pivot; v6 renamed the nine industrial scenario codes to the
+five biofeedback scenarios; **v7** renamed those five to the study's final terminology.
+
+**v7 ships a real `Migration`** (`data/db/Migrations.kt`, `MIGRATION_6_7`) rather than falling
+through to the destructive path: the affected rows are recorded sessions whose data is still valid
+and only the label changed, so the migration rewrites the stored `scenarios.scenarioCode` strings in
+place (`REFERENCE_STATE`→`BASELINE_CALIBRATION`, `COGNITIVE_LOAD`→`HIGH_COGNITIVE_DEMAND`,
+`DISTRACTING_ENVIRONMENT`→`ENVIRONMENTAL_DISTRACTION`, `LONG_TERM_FATIGUE`→`SUSTAINED_WORKLOAD`,
+`REACTION_TASKS`→`SENSORIMOTOR_RESPONSE`). The new names are what the export and the server upload
+carry — a server holding rows from before this release will have both spellings and needs them
+reconciled on its side.
 
 | Entity | Table | Purpose |
 |--------|-------|---------|
@@ -467,7 +476,7 @@ scenarios.
 | Enum | Stored values |
 |------|---------------|
 | `SessionStatus` | `ACTIVE`, `COMPLETED`, `UPLOADED` |
-| `ScenarioCode` | `REFERENCE_STATE`, `COGNITIVE_LOAD`, `DISTRACTING_ENVIRONMENT`, `LONG_TERM_FATIGUE`, `REACTION_TASKS` |
+| `ScenarioCode` | `BASELINE_CALIBRATION`, `HIGH_COGNITIVE_DEMAND`, `ENVIRONMENTAL_DISTRACTION`, `SUSTAINED_WORKLOAD`, `SENSORIMOTOR_RESPONSE` |
 | `SensorType` | `ESENSE_HEART_RATE`, `RESPIRATION`, `ESENSE_RR_INTERVAL`, `WATCH_HR`, `WATCH_IBI`, `WATCH_EDA` |
 
 **Recorded units.** `ESENSE_HEART_RATE`/`WATCH_HR` are BPM, `ESENSE_RR_INTERVAL`/`WATCH_IBI` are ms,
@@ -481,12 +490,14 @@ was not tracking breathing (`NO_BREATHING`) — neither of which produces a gap,
 arriving. See [sensor_esense_respiration.md](doc/sensor_esense_respiration.md).
 
 `ScenarioCode` carries three enum properties: a short official code (`A`…`E`), a display label (e.g.
-`Scenario A – Reference State`), and `countdownMinutes` — the scenario's scripted duration
+`Scenario A – Baseline Calibration`), and `countdownMinutes` — the scenario's scripted duration
 (**A/E 10 min, B/C 20 min, D 30 min**), which drives the recording screen's countdown and the
-automatic hand-back to the scenario hub when it ends. The constant *name* (e.g. `REFERENCE_STATE`) is
-what's stored in the DB and sent to the server, so the descriptive labels and durations can change
-without breaking old rows. (The `ScenarioCategory` concept and the `scenarioCategory` column were
-removed in v5.)
+automatic hand-back to the scenario hub when it ends. The constant *name* (e.g.
+`BASELINE_CALIBRATION`) is what's stored in the DB and sent to the server, so changing a
+`displayName` or a duration alone is free; renaming a *constant* is a wire-format change and needs a
+DB version bump with a migration (see v7). The official letter (`A`…`E`) is the one identifier that
+has survived every rename, so prefer it when correlating scenarios across releases. (The
+`ScenarioCategory` concept and the `scenarioCategory` column were removed in v5.)
 
 Session duration is derived from `endedAt − startedAt`. All timestamps come from an NTP-corrected
 clock (`TimeProvider`) on the same UTC timeline, so cross-stream alignment needs no clock-sync.

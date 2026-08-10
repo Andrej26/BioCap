@@ -10,11 +10,11 @@ enum class ScenarioCode(
     val displayName: String,
     val countdownMinutes: Int
 ) {
-    REFERENCE_STATE("A", "Scenario A – Reference State", 10),
-    COGNITIVE_LOAD("B", "Scenario B – Increased Cognitive Load", 20),
-    DISTRACTING_ENVIRONMENT("C", "Scenario C – Distracting Environment", 20),
-    LONG_TERM_FATIGUE("D", "Scenario D – Long-Term Load and Fatigue", 30),
-    REACTION_TASKS("E", "Scenario E – Reaction Tasks", 10);
+    BASELINE_CALIBRATION("A", "Scenario A – Baseline Calibration", 10),
+    HIGH_COGNITIVE_DEMAND("B", "Scenario B – High Cognitive Demand", 20),
+    ENVIRONMENTAL_DISTRACTION("C", "Scenario C – Environmental Distraction", 20),
+    SUSTAINED_WORKLOAD("D", "Scenario D – Sustained Workload", 30),
+    SENSORIMOTOR_RESPONSE("E", "Scenario E – Sensorimotor Response", 10);
 
     companion object {
         fun fromOfficialCode(code: String): ScenarioCode? =

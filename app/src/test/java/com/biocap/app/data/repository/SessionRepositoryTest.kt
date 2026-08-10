@@ -117,7 +117,7 @@ class SessionRepositoryTest {
         val scenario = ScenarioEntity(
             id = nextId,
             sessionId = sessionId,
-            scenarioCode = ScenarioCode.REFERENCE_STATE,
+            scenarioCode = ScenarioCode.BASELINE_CALIBRATION,
             startedAt = System.currentTimeMillis(),
             endedAt = endedAt
         )

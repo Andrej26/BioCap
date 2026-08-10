@@ -29,16 +29,16 @@ class ScenarioRepositoryTest {
 
     @Test
     fun createScenario_setsCodeAndSession() = runTest {
-        val s = repository.createScenario(sessionId = 1L, scenarioCode = ScenarioCode.COGNITIVE_LOAD)
+        val s = repository.createScenario(sessionId = 1L, scenarioCode = ScenarioCode.HIGH_COGNITIVE_DEMAND)
 
-        assertEquals(ScenarioCode.COGNITIVE_LOAD, s.scenarioCode)
+        assertEquals(ScenarioCode.HIGH_COGNITIVE_DEMAND, s.scenarioCode)
         assertEquals(1L, s.sessionId)
         assertNull(s.endedAt)
     }
 
     @Test
     fun endScenario_setsEndedAt() = runTest {
-        val s = repository.createScenario(sessionId = 1L, scenarioCode = ScenarioCode.DISTRACTING_ENVIRONMENT)
+        val s = repository.createScenario(sessionId = 1L, scenarioCode = ScenarioCode.ENVIRONMENTAL_DISTRACTION)
 
         repository.endScenario(s.id)
 
@@ -48,7 +48,7 @@ class ScenarioRepositoryTest {
 
     @Test
     fun endScenario_idempotent() = runTest {
-        val s = repository.createScenario(sessionId = 1L, scenarioCode = ScenarioCode.DISTRACTING_ENVIRONMENT)
+        val s = repository.createScenario(sessionId = 1L, scenarioCode = ScenarioCode.ENVIRONMENTAL_DISTRACTION)
         repository.endScenario(s.id)
         val firstEnd = fakeScenarioDao.getScenarioById(s.id)!!.endedAt
 
@@ -155,7 +155,7 @@ class ScenarioRepositoryTest {
         fakeScenarioDao.insert(
             ScenarioEntity(
                 sessionId = sessionId,
-                scenarioCode = ScenarioCode.REFERENCE_STATE,
+                scenarioCode = ScenarioCode.BASELINE_CALIBRATION,
                 startedAt = startedAt,
                 endedAt = endedAt
             )
