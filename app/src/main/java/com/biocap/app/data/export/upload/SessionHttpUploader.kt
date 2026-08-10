@@ -26,8 +26,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Uploads a completed session to the VitalWork Laravel server as one nested JSON bundle
- * (`POST /api/sessions/upload`, see `test/VitalWork_API_Service_Documentation.docx`).
+ * Uploads a completed session to the BioCap Laravel server as one nested JSON bundle
+ * (`POST /api/sessions/upload`, see `test/Change/BioCap_API_Documentation.docx`).
  *
  * The endpoint is idempotent on `sessionCode` (re-uploading replaces that session's scenarios/samples),
  * so [upload] is always safe to retry. Never throws to the caller — every outcome is a [Result].
@@ -66,12 +66,12 @@ class SessionHttpUploader(
 
     override suspend fun upload(sessionId: Long): Result<String> = withContext(Dispatchers.IO) {
         try {
-            val baseUrl = BuildConfig.VITALWORK_BASE_URL.trimEnd('/')
-            val apiKey = BuildConfig.VITALWORK_API_KEY
+            val baseUrl = BuildConfig.BIOCAP_BASE_URL.trimEnd('/')
+            val apiKey = BuildConfig.BIOCAP_API_KEY
             if (baseUrl.isEmpty() || apiKey.isEmpty()) {
                 return@withContext Result.failure(
                     IllegalStateException(
-                        "Server upload is not configured (missing VITALWORK_BASE_URL / VITALWORK_API_KEY)."
+                        "Server upload is not configured (missing BIOCAP_BASE_URL / BIOCAP_API_KEY)."
                     )
                 )
             }

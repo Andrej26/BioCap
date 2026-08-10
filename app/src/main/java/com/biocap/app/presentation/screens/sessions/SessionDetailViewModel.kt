@@ -106,7 +106,7 @@ class SessionDetailViewModel @Inject constructor(
         uploadSession()
     }
 
-    /** Upload the session to the VitalWork server. Sets status UPLOADED only on success (HTTP 201). */
+    /** Upload the session to the BioCap server. Sets status UPLOADED only on success (HTTP 200/201). */
     fun uploadSession() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(uploadState = UploadState.Uploading)

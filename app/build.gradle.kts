@@ -26,12 +26,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // VitalWork server upload config (read from local.properties; never committed).
+        // BioCap server upload config (read from local.properties; never committed).
         // Null-safe so a machine without these keys still builds (falls back to empty string).
-        val vitalworkBaseUrl = (localProps["VITALWORK_BASE_URL"] as String?).orEmpty()
-        val vitalworkApiKey = (localProps["VITALWORK_API_KEY"] as String?).orEmpty()
-        buildConfigField("String", "VITALWORK_BASE_URL", "\"$vitalworkBaseUrl\"")
-        buildConfigField("String", "VITALWORK_API_KEY", "\"$vitalworkApiKey\"")
+        val biocapBaseUrl = (localProps["BIOCAP_BASE_URL"] as String?).orEmpty()
+        val biocapApiKey = (localProps["BIOCAP_API_KEY"] as String?).orEmpty()
+        buildConfigField("String", "BIOCAP_BASE_URL", "\"$biocapBaseUrl\"")
+        buildConfigField("String", "BIOCAP_API_KEY", "\"$biocapApiKey\"")
     }
 
     val keystorePath = localProps["KEYSTORE_PATH"] as String?
@@ -92,7 +92,7 @@ dependencies {
 
     implementation(files("libs/eSense_sdk_2_lib.jar"))
 
-    // Session upload: HTTP client (tablet POSTs completed sessions to the VitalWork server)
+    // Session upload: HTTP client (tablet POSTs completed sessions to the BioCap server)
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.content.negotiation)

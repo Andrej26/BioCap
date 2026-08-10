@@ -3,8 +3,8 @@ package com.biocap.app.data.export.upload
 import kotlinx.serialization.Serializable
 
 /**
- * Wire DTOs for the VitalWork server's full-session upload endpoint
- * (`POST /api/sessions/upload`, see `test/VitalWork_API_Service_Documentation.docx` §4 & §6).
+ * Wire DTOs for the BioCap server's full-session upload endpoint
+ * (`POST /api/sessions/upload`, see `test/Change/BioCap_API_Documentation.docx` §3 & §5).
  *
  * These are deliberately **separate** from the local-export models in
  * `data.export.model.SessionExportModel`: the server accepts epoch-millisecond values for the

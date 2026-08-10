@@ -15,7 +15,7 @@ The eSense Respiration is a chest-strap respiratory sensor that connects via the
 
 > **What ends up in the data.** `SensorType.RESPIRATION` samples are the **raw RA waveform** — a
 > dimensionless chest-expansion amplitude, *not* breaths per minute. The same holds for the exported
-> JSON/CSV (`sensorType: "respiration"`) and for the upload DTOs sent to the VitalWork server. The
+> JSON/CSV (`sensorType: "respiration"`) and for the upload DTOs sent to the BioCap server. The
 > app additionally shows a coarse live br/min estimate on the sensor screen, but it is display-only:
 > nothing derived from it is persisted, because breathing rate is far better re-derived from the raw
 > waveform offline (see [Breathing Rate Calculation](#breathing-rate-calculation)).

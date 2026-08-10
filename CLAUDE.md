@@ -4,12 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-BioCap is an Android mobile application written in Kotlin using Jetpack Compose. It is the **operator-side app** for a research study monitoring **operator physiological state during simulated work scenarios**. The tablet/phone captures physiological data (heart rate, RR/IBI intervals, respiration, EDA) from BLE / audio-jack / Galaxy Watch sensors during each of five biofeedback scenarios (A–E), and uploads the bundled dataset (participant + session + scenarios + samples) to the VitalWork server at session end. A second device can pair over local Wi-Fi (device-to-device link) so the operator watches the monitored device's live screen. (The former VR/reaction-time phase — Meta Quest link, Ktor HTTP server, UDP beacon — was removed in the biofeedback pivot; see DB history v5/v6.)
+BioCap is an Android mobile application written in Kotlin using Jetpack Compose. It is the **operator-side app** for a research study monitoring **operator physiological state during simulated work scenarios**. The tablet/phone captures physiological data (heart rate, RR/IBI intervals, respiration, EDA) from BLE / audio-jack / Galaxy Watch sensors during each of five biofeedback scenarios (A–E), and uploads the bundled dataset (participant + session + scenarios + samples) to the BioCap server at session end. A second device can pair over local Wi-Fi (device-to-device link) so the operator watches the monitored device's live screen. (The former VR/reaction-time phase — Meta Quest link, Ktor HTTP server, UDP beacon — was removed in the biofeedback pivot; see DB history v5/v6.)
 
-> **Provenance:** BioCap is an independent fork of the VitalWork codebase (2026-07). The two apps
-> are fully separate (different `applicationId`, network identifiers, and branding — they cannot
-> pair with each other), but **both upload to the same VitalWork server** by design. Session codes
-> minted by BioCap use the `BC-` prefix (VitalWork uses `VW-`), so the server can tell them apart.
+> **Provenance:** BioCap began as an independent fork of the VitalWork codebase (2026-07) — that
+> origin is stated here as history only; everything the app ships is BioCap-branded. The two apps are
+> fully separate: different `applicationId`, network identifiers, branding (they cannot pair with each
+> other), and — since 2026-08 — **their own upload servers**, so BioCap no longer shares a backend
+> with anything. Session codes minted by BioCap use the `BC-` prefix.
 
 **Package:** `com.biocap.app`
 
@@ -19,7 +20,7 @@ BioCap is an Android mobile application written in Kotlin using Jetpack Compose.
 - Gradle 9.3.0 with Kotlin DSL and version catalog
 - Hilt/Dagger for dependency injection
 - Room 2.7.1 for local database
-- Ktor 3.3.0 (client, CIO engine) — uploads completed sessions to the VitalWork server
+- Ktor 3.3.0 (client, CIO engine) — uploads completed sessions to the BioCap server
 - Kronos — NTP clock offset for all persisted timestamps (never sets the system clock)
 - Java-WebSocket + stream-webrtc-android — device-to-device link + screen mirroring
 - Play Services Wearable (Data Layer) for the watch ↔ tablet link
@@ -81,7 +82,7 @@ MainActivity (entry point)
 The app has three main responsibilities:
 
 1. **Sensor Data Collection** — gather physiological data (heart rate, RR/IBI intervals, respiration, EDA) from BLE, audio-jack, and Galaxy Watch sensors
-2. **Session Management + Export/Upload** — organize anonymous test sessions (participant → session → five biofeedback scenarios A–E → samples), local JSON/CSV export to Documents, and HTTP upload of the full session bundle to the VitalWork server (`SessionHttpUploader`, config in `local.properties`)
+2. **Session Management + Export/Upload** — organize anonymous test sessions (participant → session → five biofeedback scenarios A–E → samples), local JSON/CSV export to Documents, and HTTP upload of the full session bundle to the BioCap server (`SessionHttpUploader`, config in `local.properties`)
 3. **Device-to-Device Link + Screen Mirroring** — a direct tablet↔tablet/phone link over local Wi-Fi (server hosts, client connects; mDNS discovery + a WebSocket on port 9090) that also carries WebRTC signaling so the operator (server) can watch the monitored device's (client) live screen, peer-to-peer with no media server or cloud cost. See **Device-to-Device Link** below.
 
 **Device mode (launch picker):** on first launch the app asks whether this device is **Server** or **Client** (`ModeSelectionScreen`); the choice is persisted (`DeviceModePreferencesRepository`) so later launches skip straight to Home. Home is mode-aware: in **Server** mode it shows only **Connect as Server** (+ Settings); in **Client** mode it shows the full operator home (sessions, sensors, etc.) minus **Connect as Server**. The mode can be changed any time under **Settings → Device mode**; Home re-reads it on resume.
@@ -255,7 +256,7 @@ com.biocap.app/
 │   │   ├── SessionUploader.kt              # upload interface (bound to SessionHttpUploader)
 │   │   ├── model/
 │   │   │   └── SessionExportModel.kt
-│   │   └── upload/                         # HTTP upload to the VitalWork server
+│   │   └── upload/                         # HTTP upload to the BioCap server
 │   │       ├── SessionHttpUploader.kt      # Ktor client; POST /api/sessions/upload; idempotent on sessionCode
 │   │       ├── SessionUploadMapper.kt      # entities → upload DTOs (epoch ms, enum names)
 │   │       └── UploadDtos.kt
@@ -512,7 +513,7 @@ eSense Resp.  ◄────Audio────► MindfieldRespiration ► Esens
 Galaxy Watch  ──Data Layer──► WatchListenerService ► WatchSensorReceiver ──► UI + recording
 
 All sensors ──► ScenarioRecordingRepository ──► Room DB ──┬──► SessionExportService ──► JSON/CSV (Documents)
-                                                          └──► SessionHttpUploader ──► VitalWork server
+                                                          └──► SessionHttpUploader ──► BioCap server
 
 Server (operator) ⇄ WebSocket :9090 (signaling) ⇄ Client (monitored)   via PeerLinkManager
 Server (viewer)   ◄── WebRTC P2P/UDP (live screen video) ── Client (sharer)   via WebRtcEngine/ScreenShareController

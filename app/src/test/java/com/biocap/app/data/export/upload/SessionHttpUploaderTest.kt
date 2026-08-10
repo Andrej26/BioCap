@@ -76,13 +76,13 @@ class SessionHttpUploaderTest {
     @Test
     fun success201_returnsServerMessage_andSendsBearerTokenToCorrectUrl() = runTest {
         // BuildConfig must be configured for the request to be attempted.
-        assumeTrue(BuildConfig.VITALWORK_BASE_URL.isNotEmpty() && BuildConfig.VITALWORK_API_KEY.isNotEmpty())
+        assumeTrue(BuildConfig.BIOCAP_BASE_URL.isNotEmpty() && BuildConfig.BIOCAP_API_KEY.isNotEmpty())
 
         var captured: HttpRequestData? = null
         val engine = MockEngine { request ->
             captured = request
             respond(
-                content = """{"message":"Full VitalWork session uploaded."}""",
+                content = """{"message":"Full BioCap session uploaded."}""",
                 status = HttpStatusCode.Created,
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
@@ -91,14 +91,14 @@ class SessionHttpUploaderTest {
         val result = uploaderWith(engine).upload(sessionId)
 
         assertTrue(result.isSuccess)
-        assertEquals("Full VitalWork session uploaded.", result.getOrNull())
-        assertEquals("Bearer ${BuildConfig.VITALWORK_API_KEY}", captured?.headers?.get(HttpHeaders.Authorization))
+        assertEquals("Full BioCap session uploaded.", result.getOrNull())
+        assertEquals("Bearer ${BuildConfig.BIOCAP_API_KEY}", captured?.headers?.get(HttpHeaders.Authorization))
         assertTrue(captured?.url.toString().endsWith("/api/sessions/upload"))
     }
 
     @Test
     fun unauthorized401_returnsFailure() = runTest {
-        assumeTrue(BuildConfig.VITALWORK_BASE_URL.isNotEmpty() && BuildConfig.VITALWORK_API_KEY.isNotEmpty())
+        assumeTrue(BuildConfig.BIOCAP_BASE_URL.isNotEmpty() && BuildConfig.BIOCAP_API_KEY.isNotEmpty())
 
         val engine = MockEngine {
             respond(
@@ -116,7 +116,7 @@ class SessionHttpUploaderTest {
 
     @Test
     fun validationError422_returnsFailure() = runTest {
-        assumeTrue(BuildConfig.VITALWORK_BASE_URL.isNotEmpty() && BuildConfig.VITALWORK_API_KEY.isNotEmpty())
+        assumeTrue(BuildConfig.BIOCAP_BASE_URL.isNotEmpty() && BuildConfig.BIOCAP_API_KEY.isNotEmpty())
 
         val engine = MockEngine {
             respond(
@@ -134,7 +134,7 @@ class SessionHttpUploaderTest {
 
     @Test
     fun missingSession_returnsFailure_withoutNetworkCall() = runTest {
-        assumeTrue(BuildConfig.VITALWORK_BASE_URL.isNotEmpty() && BuildConfig.VITALWORK_API_KEY.isNotEmpty())
+        assumeTrue(BuildConfig.BIOCAP_BASE_URL.isNotEmpty() && BuildConfig.BIOCAP_API_KEY.isNotEmpty())
 
         var called = false
         val engine = MockEngine {

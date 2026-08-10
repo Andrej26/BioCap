@@ -241,7 +241,7 @@ fun SessionDetailScreen(
                 }
             }
 
-            // Upload to the VitalWork server. Primary (navy) action; sets status UPLOADED on success.
+            // Upload to the BioCap server. Primary (navy) action; sets status UPLOADED on success.
             Button(
                 onClick = { viewModel.uploadSession() },
                 modifier = Modifier.fillMaxWidth(),
