@@ -1,9 +1,9 @@
-# Prevádzková príručka — senzorický riadiaci modul VitalWork
+# Prevádzková príručka — senzorický riadiaci modul BioCap
 
 **Projekt:** RAP_126 — Vývoj prototypu senzorického riadiaceho modulu na monitorovanie fyziologického
 stavu operátora počas simulovaných pracovných scenárov
-**Verzia dokumentu:** 1.0
-**Dátum:** 2026-07-22
+**Verzia dokumentu:** 1.1
+**Dátum:** 2026-08-11
 **Určené pre:** operátora merania (obsluhu zariadenia počas testovacieho sedenia)
 
 ---
@@ -26,11 +26,11 @@ stavu operátora počas simulovaných pracovných scenárov
 
 *Pozri diagram 01 — Architektúra systému:* `diagrams/png/01_system_architecture_en.png`
 
-Systém VitalWork tvoria nasledujúce zariadenia, ktoré operátor pripravuje a ovláda:
+Systém BioCap tvoria nasledujúce zariadenia, ktoré operátor pripravuje a ovláda:
 
 | Zariadenie | Úloha počas merania |
 |------------|----------------------|
-| **Android tablet/telefón** (Client) | Beží na ňom aplikácia VitalWork; pripája senzory; nahráva a odosiela sedenie |
+| **Android tablet/telefón** (Client) | Beží na ňom aplikácia BioCap; pripája senzory; nahráva a odosiela sedenie |
 | **eSense Pulse** (hrudný pás) | Meria srdcovú frekvenciu a R-R intervaly cez BLE |
 | **eSense Respiration** (hrudný pás) | Meria amplitúdu dýchania cez jack konektor tabletu |
 | **Galaxy Watch 8** | Meria EDA, srdcovú frekvenciu a IBI; nosí ho účastník |
@@ -48,7 +48,8 @@ Systém VitalWork tvoria nasledujúce zariadenia, ktoré operátor pripravuje a 
 ### 2.1 Kontrolný zoznam pred každým sedením
 
 - [ ] Tablet/telefón nabitý (odporúča sa ≥ 80 %)
-- [ ] Galaxy Watch nabitý (odporúča sa ≥ 50 %; aplikácia zobrazí upozornenie na nízku batériu)
+- [ ] Galaxy Watch nabitý (odporúča sa ≥ 50 %; aplikácia upozorní pri ≤ 20 % a kriticky pri
+      ≤ 10 %, kedy môžu hodinky prejsť do úsporného režimu a prestať snímať pri zhasnutej obrazovke)
 - [ ] eSense Pulse nabitý a funkčný (indikátor svieti)
 - [ ] eSense Respiration zapojený do jack konektora tabletu
 - [ ] **Bluetooth na tablete je zapnutý** (potrebný pre BLE spojenie s eSense Pulse aj pre Data Layer
@@ -80,7 +81,7 @@ uchová — pri ďalšom spustení aplikácia prejde priamo na domovskú obrazov
 ### 3.2 Domovská obrazovka (režim Client)
 
 *Snímka obrazovky: Domovská obrazovka, režim Client*
-![Domov — Client](screenshots/VW_01_home_client.jpg){width=2.3in}
+![Domov — Client](screenshots/BC_01_home_client.jpg){width=2.3in}
 
 | Prvok | Účel |
 |-------|------|
@@ -98,7 +99,7 @@ uchová — pri ďalšom spustení aplikácia prejde priamo na domovskú obrazov
 ### 3.3 Domovská obrazovka (režim Server)
 
 *Snímka obrazovky: Domovská obrazovka, režim Server*
-![Domov — Server](screenshots/VW_09_home_server.jpg){width=2.3in}
+![Domov — Server](screenshots/BC_09_home_server.jpg){width=2.3in}
 
 Zariadenie v režime Server zobrazuje iba **Connect as Server** a **Settings** — hostenie spojenia a
 sledovanie obrazovky spárovaného zariadenia je jeho jedinou úlohou; samotné sedenia ani senzory
@@ -107,11 +108,11 @@ nespúšťa.
 ### 3.4 Jednorazové nastavenie — prefix a režim zariadenia
 
 *Snímka obrazovky: Settings — prefix zariadenia a režim zariadenia*
-![Settings](screenshots/VW_02_settings.jpg){width=2.3in}
+![Settings](screenshots/BC_02_settings.jpg){width=2.3in}
 
 Pred prvým sedením otvorte **Settings** a zvoľte prefix tohto zariadenia: **A**, **B**, **C** alebo
 **D**. Prefix sa pridáva ku každému kódu účastníka (napr. `A-001`) a kódu sedenia
-(`VW-A-yyMMdd-HHmmss`) generovanému na tomto zariadení a zároveň obmedzuje spojenie medzi zariadeniami
+(`BC-A-yyMMdd-HHmmss`) generovanému na tomto zariadení a zároveň obmedzuje spojenie medzi zariadeniami
 na jednu dvojicu.
 
 > **Pravidlo:** obe zariadenia jednej dvojice (Client + jeho Server) používajú **rovnaké** písmeno;
@@ -164,7 +165,7 @@ Aplikácia priebežne sleduje kvalitu signálu a pri probléme zobrazí varovný
 
 *Snímka obrazovky: obrazovka nastavenia senzorov — Mindfield eSense (pripája sa) a Galaxy Watch 8
 (odpojený)*
-![Nastavenie senzorov](screenshots/VW_04_sensor_setup.jpg){width=2.3in}
+![Nastavenie senzorov](screenshots/BC_04_sensor_setup.jpg){width=2.3in}
 
 ---
 
@@ -187,7 +188,7 @@ Aplikácia priebežne sleduje kvalitu signálu a pri probléme zobrazí varovný
 3. Ťuknite na **Start session**.
 
 *Snímka obrazovky: formulár New Participant*
-![Nový účastník](screenshots/VW_03_new_participant.jpg){width=2.3in}
+![Nový účastník](screenshots/BC_03_new_participant.jpg){width=2.3in}
 
 4. Aplikácia otvorí **obrazovku nastavenia senzorov** — jednorazovú kontrolu pred začiatkom nahrávania
    (pozri §4 a snímku vyššie). Ťuknite na **Proceed to scenarios**, akonáhle sú potrebné senzory
@@ -212,12 +213,12 @@ Aplikácia priebežne sleduje kvalitu signálu a pri probléme zobrazí varovný
    *Waiting for monitored device*.
 
    *Snímka obrazovky: Link — Server, pred pripojením*
-   ![Link — Server](screenshots/VW_10_link_server.jpg){width=2.3in}
+   ![Link — Server](screenshots/BC_10_link_server.jpg){width=2.3in}
 
 2. Na zariadení **Client** ťuknite na **Connect as Client**. Aplikácia vyhľadá Server cez mDNS.
 
    *Snímka obrazovky: Link — Client, vyhľadávanie*
-   ![Link — Client](screenshots/VW_08_link_client.jpg){width=2.3in}
+   ![Link — Client](screenshots/BC_08_link_client.jpg){width=2.3in}
 
 3. Na zariadení Client ťuknite na nájdené zariadenie v zozname **Discovered peers** a potom na
    **Connect**. Po nadviazaní WebSocket spojenia sa na oboch obrazovkách zobrazí zelený stav
@@ -238,21 +239,24 @@ je pomôcka na sledovanie, nie súčasť samotného merania.
 
 ## 7. Priebeh merania — scenáre A–E
 
-### 7.1 Rozcestník scenárov
+### 7.1 Ponuka scenárov
 
-Po obrazovke nastavenia senzorov sa zobrazí **rozcestník scenárov** — jedna karta pre každý scenár a
+Po obrazovke nastavenia senzorov sa zobrazí sa **ponuka scenárov** — jedna karta pre každý scenár a
 tlačidlo **End Session & Save** na konci.
 
-*Snímka obrazovky: rozcestník scenárov*
-![Rozcestník scenárov](screenshots/VW_05_scenario_hub.jpg){width=2.3in}
+*Snímka obrazovky: ponuka scenárov*
+![Ponuka scenárov](screenshots/BC_05_scenario_hub.jpg){width=2.3in}
 
 | Scenár | Trvanie | Účel |
 |--------|---------|------|
-| **A — Reference State** | 10 min | Základné (referenčné) meranie bez vyvolanej záťaže |
-| **B — Increased Cognitive Load** | 20 min | Podmienka kognitívnej záťaže |
-| **C — Distracting Environment** | 20 min | Podmienka rušivého prostredia |
-| **D — Long-Term Load and Fatigue** | 30 min | Podmienka dlhodobej záťaže a únavy |
-| **E — Reaction Tasks** | 10 min | Podmienka reakčných úloh |
+| **A — Baseline Calibration** | 10 min | Základné (referenčné) meranie bez vyvolanej záťaže |
+| **B — High Cognitive Demand** | 20 min | Podmienka kognitívnej záťaže |
+| **C — Environmental Distraction** | 20 min | Podmienka rušivého prostredia |
+| **D — Sustained Workload** | 30 min | Podmienka dlhodobej záťaže a únavy |
+| **E — Sensorimotor Response** | 10 min | Podmienka reakčných úloh |
+
+> Trvanie je pre každý scenár pevne dané a riadi odpočet; po jeho uplynutí aplikácia nahrávanie sama
+> zastaví a uzavrie.
 
 ### 7.2 Priebeh jedného scenára
 
@@ -262,9 +266,9 @@ tlačidlo **End Session & Save** na konci.
    odznakom **REC** a uplynutým časom. Aplikácia zároveň zamkne dotykové ovládanie a skryje systémové
    lišty, takže tablet možno bezpečne odložiť alebo vložiť do vrecka počas behu.
 3. Keď odpočítavanie dosiahne nulu, scenár sa **automaticky zastaví a uzavrie** a aplikácia sa vráti
-   do rozcestníka. Dokončený scenár má zelenú fajku a jeho písmenový odznak sa zafarbí na zeleno.
+   do ponuky scenárov. Dokončený scenár má zelenú fajku a jeho písmenový odznak sa zafarbí na zeleno.
 4. Zopakujte pre každý scenár vyžadovaný protokolom. Scenáre možno spúšťať v ľubovoľnom poradí a v
-   prípade potreby ich možno zopakovať — rozcestník vždy zobrazuje, ktoré už majú zaznamenaný beh.
+   prípade potreby ich možno zopakovať — ponuka scenárov vždy zobrazuje, ktoré už majú zaznamenaný beh.
 
 > Ak sa senzor počas scenára odpojí, zobrazí sa banner („… odpojený — nahrávanie pokračuje —
 > pripojte ho znova, aby sa obnovilo zaznamenávanie dát"). Časovač scenára beží ďalej; senzor
@@ -280,7 +284,7 @@ tlačidlo **End Session & Save** na konci.
 
 ### 8.1 Ukončenie sedenia
 
-1. V rozcestníku scenárov ťuknite na **End Session & Save** a potvrďte.
+1. V ponuke scenárov ťuknite na **End Session & Save** a potvrďte.
 2. Ak majú hodinky Galaxy Watch uložené ešte neodoslané dáta, aplikácia vyzve operátora, aby
    **prebudil hodinky** (ťuknutím na ich obrazovku), aby mohli odoslať späť všetko, čo počas sedenia
    uložili.
@@ -288,7 +292,7 @@ tlačidlo **End Session & Save** na konci.
    obrazovku prehľadu sedenia.
 
    *Snímka obrazovky: potvrdenie ukončenia sedenia*
-   ![Watch data saved](screenshots/VW_06_watch_data_saved.jpg){width=2.3in}
+   ![Watch data saved](screenshots/BC_06_watch_data_saved.jpg){width=2.3in}
 
    > Ak hodinky nereagujú, je k dispozícii voľba **End without watch data** — hodinky si svoje
    > uložené dáta bezpečne ponechajú a možno ich získať pri neskoršom sedení; žiadne dáta sa
@@ -299,11 +303,11 @@ tlačidlo **End Session & Save** na konci.
 Aplikácia automaticky otvorí obrazovku **prehľadu sedenia**.
 
 *Snímka obrazovky: prehľad sedenia*
-![Prehľad sedenia](screenshots/VW_07_session_review.jpg){width=2.3in}
+![Prehľad sedenia](screenshots/BC_07_session_review.jpg){width=2.3in}
 
 | Akcia | Účinok |
 |-------|--------|
-| **Upload to server** | Odošle celé sedenie (účastník + scenáre + vzorky) na server VitalWork. Bezpečné zopakovať — upload je identifikovaný kódom sedenia (sessionCode), takže opakovanie neduplikuje dáta. |
+| **Upload to server** | Odošle celé sedenie (účastník + scenáre + vzorky) na server BioCap. Bezpečné zopakovať — upload je identifikovaný kódom sedenia (sessionCode), takže opakovanie neduplikuje dáta. |
 | **Export to Documents** | Zapíše lokálnu kópiu v JSON + CSV do priečinka Documents na tablete. Nezávisí od stavu uploadu. |
 | **Delete Session** | Trvalo odstráni sedenie — až po jeho exporte alebo uploade. |
 
@@ -325,7 +329,7 @@ Aplikácia automaticky otvorí obrazovku **prehľadu sedenia**.
 | Spojenie medzi zariadeniami — Client nenájde Server | Zariadenia nie sú na tej istej Wi-Fi sieti, alebo Server nebol spustený | Overte, že sú obe na rovnakej Wi-Fi; najprv ťuknite na Connect na zariadení Server |
 | Zrkadlenie obrazovky nič nezobrazuje | Súhlas so zdieľaním obrazovky bol na zariadení Client zamietnutý | Na zariadení Server znova ťuknite na View screen a na zariadení Client potvrďte systémový dialóg |
 | Upload na server zlyhal | Chýbajúce alebo slabé pripojenie k sieti | Zopakujte po obnovení pripojenia; upload je bezpečné opakovať |
-| Tablet po čase odpája senzory | Optimalizácia batérie ukončuje službu bežiacu na pozadí | V systémových nastaveniach vylúčte aplikáciu VitalWork z optimalizácie batérie |
+| Tablet po čase odpája senzory | Optimalizácia batérie ukončuje službu bežiacu na pozadí | V systémových nastaveniach vylúčte aplikáciu BioCap z optimalizácie batérie |
 
 ---
 

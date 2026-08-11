@@ -1,9 +1,9 @@
-# Technical Documentation — VitalWork Sensor Control Module
+# Technical Documentation — BioCap Sensor Control Module
 
 **Project:** RAP_126 — Development of a prototype sensor control module for monitoring operator
 physiological state during simulated work scenarios
-**Document version:** 1.0
-**Date:** 2026-07-22
+**Document version:** 1.1
+**Date:** 2026-08-11
 **Language:** English translation (the authoritative formal output is the Slovak version); source-code
 documentation is in English.
 
@@ -29,7 +29,7 @@ documentation is in English.
 
 This document is a formal technical output of grant **Activity 2** (modelling / simulation) of project
 RAP_126. It describes the architecture, components, communication protocols and data model of the
-**VitalWork** system — a sensor control module for monitoring an operator's physiological state during
+**BioCap** system — a sensor control module for monitoring an operator's physiological state during
 five simulated biofeedback work scenarios.
 
 The system is a prototype intended for the **technical verification of physiological-parameter
@@ -45,25 +45,28 @@ part in the measurement itself.
 
 *See diagram 01 — System architecture:* `diagrams/png/01_system_architecture_en.png`
 
-The VitalWork system consists of four physical components interconnected over local Wi-Fi and
-Bluetooth:
+The BioCap system consists of four physical components interconnected over local Wi-Fi and
+Bluetooth, plus an optional fifth device for remote observation:
 
 | Component | Role |
 |-----------|------|
 | **Monitored device** (Android tablet/phone, client role) | Central node: sensor data collection, session management, local export, and upload to the server |
 | **eSense Pulse** (Mindfield Biosignals) | Heart-rate and R-R interval sensor over BLE |
-| **eSense Respiration** (Mindfield Biosignals) | Respiration-rate sensor over the monitored device's audio jack |
+| **eSense Respiration** (Mindfield Biosignals) | Respiration-amplitude sensor over the monitored device's audio jack |
 | **Galaxy Watch 8** (Samsung) | EDA, heart-rate and IBI sensor; streams data over the Wearable Data Layer to the monitored device |
-| **Viewer device** (Android tablet/phone, server role) | The operator's second device; watches the monitored device's live screen over a direct Wi-Fi link |
+| **Viewer device** (Android tablet/phone, server role) — *optional* | The operator's second device; watches the monitored device's live screen over a direct Wi-Fi link. Not part of the measurement chain |
 
-The central VitalWork server (off-device) receives uploaded sessions over HTTP.
+The central BioCap server (off-device) receives uploaded sessions over HTTP. Since 2026-08 this is
+BioCap's own server; the application no longer shares a backend with any other system.
 
 ### 2.2 Measurement objective
 
 The system records the operator's **physiological state** while they work through five biofeedback
-scenarios (A–E): Reference State, Cognitive Load, Distracting Environment, Long-Term Fatigue, and
-Reaction Tasks. All timestamps come from a single NTP-corrected clock on the monitored device
-(`TimeProvider`), so every sensor's samples share the same UTC timeline with no additional
+scenarios (A–E): Baseline Calibration, High Cognitive Demand, Environmental Distraction, Sustained
+Workload, and Sensorimotor Response. Each scenario has a scripted duration — 10 min for A and E,
+20 min for B and C, 30 min for D — which drives the recording screen's countdown and the automatic
+return to the scenario hub. All timestamps come from a single NTP-corrected clock on the monitored
+device (`TimeProvider`), so every sensor's samples share the same UTC timeline with no additional
 device-to-device clock synchronisation step.
 
 The following physiological signals are recorded in parallel:
@@ -171,8 +174,8 @@ The project consists of two Gradle modules:
 
 ```
 MainActivity
-└── VitalWorkApplication      (Hilt application class)
-    └── VitalWorkTheme        (Material 3 theme, forced light)
+└── BioCapApplication      (Hilt application class)
+    └── BioCapTheme        (Material 3 theme, forced light)
         └── AppNavigation     (NavHost — Compose navigation)
             └── Composable screens
 ```
@@ -212,8 +215,8 @@ and stops once every reason has cleared.
 | `sessions` | SessionsScreen | List of completed sessions |
 | `sessions/setup/{sessionId}` | SessionControlScreen (setup mode) | One-time sensor-connection gate after participant entry |
 | `sessions/scenario-select/{sessionId}` | ScenarioSelectionScreen | Scenario hub: pick A–E or end the session |
-| `sessions/active/{sessionId}` | SessionControlScreen | Records the picked scenario (auto-start + countdown) |
-| `sessions/review/{sessionId}` | SessionDetailScreen | Session review, local export, upload |
+| `sessions/active/{sessionId}?scenario={n}` | SessionControlScreen | Records the picked scenario (auto-start + countdown) |
+| `sessions/review/{sessionId}?showCsvSaved={bool}` | SessionDetailScreen | Session review, local export, upload |
 
 ---
 
@@ -301,9 +304,15 @@ this single clock, so cross-stream alignment needs no additional device-to-devic
 
 *See diagram 03 — Data model (ER schema):* `diagrams/png/03_data_model_en.png`
 
-Room database (schema v6) with 4 entities; cascade delete on all foreign keys. The schema uses
-`fallbackToDestructiveMigration`, so a version bump wipes old local rows without a hand-written
-migration — acceptable because sessions are already exported/uploaded by the time the schema changes.
+Room database (schema v7) with 4 entities; cascade delete on all foreign keys. The schema uses
+`fallbackToDestructiveMigration` as its catch-all, so a structural version bump wipes old local rows
+without a hand-written migration — acceptable because sessions are already exported/uploaded by the
+time the schema changes.
+
+**v7 is the exception:** it ships a real `Migration` (`data/db/Migrations.kt`, `MIGRATION_6_7`). The
+v7 bump only renamed the stored `ScenarioCode` values, so the affected rows are recorded sessions
+whose data is still valid; the destructive path would have discarded real recordings for a label
+change. The migration rewrites `scenarios.scenarioCode` in place instead.
 
 | Entity | Table | Purpose |
 |--------|-------|---------|
@@ -317,18 +326,24 @@ migration — acceptable because sessions are already exported/uploaded by the t
 | Enum | Values |
 |------|--------|
 | `SessionStatus` | `ACTIVE`, `COMPLETED`, `UPLOADED` |
-| `ScenarioCode` | `REFERENCE_STATE` (A), `COGNITIVE_LOAD` (B), `DISTRACTING_ENVIRONMENT` (C), `LONG_TERM_FATIGUE` (D), `REACTION_TASKS` (E) |
+| `ScenarioCode` | `BASELINE_CALIBRATION` (A), `HIGH_COGNITIVE_DEMAND` (B), `ENVIRONMENTAL_DISTRACTION` (C), `SUSTAINED_WORKLOAD` (D), `SENSORIMOTOR_RESPONSE` (E) |
 | `SensorType` | `ESENSE_HEART_RATE`, `ESENSE_RR_INTERVAL`, `RESPIRATION`, `WATCH_HR`, `WATCH_IBI`, `WATCH_EDA` |
 
-`ScenarioCode` carries a short official code (A–E) and a display label as enum properties — the
-constant *name* (e.g. `REFERENCE_STATE`) is what is stored in the database and sent to the server, so
-descriptive labels can change without breaking existing rows.
+`ScenarioCode` carries three enum properties: a short official code (A–E), a display label (e.g.
+*Scenario A – Baseline Calibration*), and `countdownMinutes` — the scenario's scripted duration
+(A/E 10 min, B/C 20 min, D 30 min).
+
+The constant *name* (e.g. `BASELINE_CALIBRATION`) is what is stored in the database and sent to the
+server, so changing a display label or a duration alone is free. Renaming a *constant* is a
+wire-format change and requires a schema version bump with a migration — which is exactly what v7
+was. The official letter (A–E) is the one identifier that has survived every rename, so it is the
+safest key when correlating scenarios across releases.
 
 ### 6.2 Identifier encoding
 
 Each device carries a prefix (A/B/C/D) configured in the settings (`SettingsRepository`,
 SharedPreferences, default `A`). The prefix tags both participant codes (`A-001-260722-143022`) and
-session codes (`VW-A-yyMMdd-HHmmss`), so multiple devices testing in parallel never mint colliding
+session codes (`BC-A-yyMMdd-HHmmss`), so multiple devices testing in parallel never mint colliding
 codes. Operators must agree beforehand which device owns which letter; the counter is scoped per
 prefix (`ParticipantDao.getParticipantCountByPrefix`), so collisions are only avoided across devices
 with distinct letters.
@@ -345,9 +360,16 @@ are computed once, when the session ends, from the samples recorded in the datab
 The schema evolved through the biofeedback pivot: v2 added `WATCH_IBI`; v3 split per-device sensor
 types; v4 added the watch sample counters; v5 dropped the reaction-time/VR fields
 (`scenarioCategory`, `eventTimestampMs`, `reactionTimestampMs`) and `sessions.notes`; v6 renamed the
-nine industrial scenario codes to the five biofeedback scenarios described in §6.1. The former VR
-phase — a Meta Quest link, an on-device HTTP server, and a UDP discovery beacon — was removed entirely
-in this pivot and is not part of the current system.
+nine industrial scenario codes to five biofeedback scenarios; **v7** renamed those five to the
+study's final terminology described in §6.1, and is the only bump so far that carries a hand-written
+migration rather than the destructive fallback. The former VR phase — a Meta Quest link, an on-device
+HTTP server, and a UDP discovery beacon — was removed entirely in this pivot and is not part of the
+current system.
+
+> **Note for the server side:** the v7 rename affects the values sent on upload. A server holding
+> sessions recorded before this release will have both spellings (e.g. `COGNITIVE_LOAD` and
+> `HIGH_COGNITIVE_DEMAND`) and needs them reconciled there; the official letter (A–E) identifies the
+> scenario unambiguously in both.
 
 ---
 
@@ -391,7 +413,7 @@ Operator ends the session
 
 ```
 Session end (automatic)
-    → SessionHttpUploader (Ktor client) → POST /api/sessions/upload to the VitalWork server
+    → SessionHttpUploader (Ktor client) → POST /api/sessions/upload to the BioCap server
         (a single idempotent POST, keyed on sessionCode; safe to retry)
     → On success: SessionEntity.status = UPLOADED
 
@@ -421,7 +443,7 @@ from the Session Review screen.
 
 | Permission | Purpose |
 |------------|---------|
-| `INTERNET`, `ACCESS_NETWORK_STATE` | Upload to the VitalWork server, peer-link connectivity |
+| `INTERNET`, `ACCESS_NETWORK_STATE` | Upload to the BioCap server, peer-link connectivity |
 | `CHANGE_WIFI_MULTICAST_STATE` | mDNS discovery of the peer device |
 | `RECORD_AUDIO`, `MODIFY_AUDIO_SETTINGS` | eSense Respiration (audio jack) |
 | `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT`, `BLUETOOTH_ADVERTISE` | BLE for eSense Pulse (Android 12+) |
@@ -452,10 +474,10 @@ field in the UI is read-only to keep the scheme typo-proof.
 | Room | 2.7.1 | Google Maven |
 | Ktor (CIO client) | 3.3.0 | Maven Central |
 | Kronos (Lyft NTP) | 0.0.1-alpha11 | Maven Central |
-| Java-WebSocket | current | Maven Central |
-| stream-webrtc-android | current | Maven Central |
-| Play Services Wearable | current | Google Maven |
-| Samsung Health Sensor SDK | current | Local AAR (`wear/libs/`) |
+| Java-WebSocket | 1.6.0 | Maven Central |
+| stream-webrtc-android | 1.3.10 | Maven Central |
+| Play Services Wearable | 19.0.0 | Google Maven |
+| Samsung Health Sensor SDK | 1.4.1 | Local AAR (`wear/libs/samsung-health-sensor-api-1.4.1.aar`) |
 | eSense SDK | 2.x | Local JAR (`app/libs/eSense_sdk_2_lib.jar`) |
 
 All versions are centrally managed in `gradle/libs.versions.toml`.
@@ -502,8 +524,16 @@ KEY_ALIAS=...
 KEY_PASSWORD=...
 ```
 
-The VitalWork server base URL used by `SessionHttpUploader` is also configured in
-`local.properties`.
+The BioCap server used by `SessionHttpUploader` is configured in the same file, under two keys that
+are read into `BuildConfig` at build time:
+
+```properties
+BIOCAP_BASE_URL=...
+BIOCAP_API_KEY=...
+```
+
+If either is missing, the build still succeeds but the upload fails with *"Server upload is not
+configured"* — the session stays `COMPLETED` and can be uploaded later, so no data is lost.
 
 ### 10.4 Companion app installation (Galaxy Watch)
 
@@ -516,7 +546,7 @@ is described in detail in [`doc/install_watch_app.md`](../install_watch_app.md).
 
 *See diagram 06 — Export schema:* `diagrams/png/06_export_schema_en.png`
 
-At session end the session is automatically uploaded to the VitalWork server as a single idempotent
+At session end the session is automatically uploaded to the BioCap server as a single idempotent
 JSON POST (`/api/sessions/upload`, keyed on `sessionCode`). Saving JSON/CSV files locally on the
 device is a separate, optional step the operator can trigger — the exported JSON is the authoritative,
 fully nested bundle; the per-scenario CSV files are a flat, spreadsheet-friendly view of the same
@@ -526,8 +556,8 @@ samples.
 
 | File | Scope | Example name |
 |------|-------|--------------|
-| `{sessionCode}_export.json` | One file per **session** (participant + session + all scenarios + all samples) | `VW-A-260722-171532_export.json` |
-| `{sessionCode}_NN_{SCENARIO}.csv` | One file per **scenario** (`NN` = 01, 02, …, ordinal) | `VW-A-260722-171532_02_COGNITIVE_LOAD.csv` |
+| `{sessionCode}_export.json` | One file per **session** (participant + session + all scenarios + all samples) | `BC-A-260722-171532_export.json` |
+| `{sessionCode}_NN_{SCENARIO}.csv` | One file per **scenario** (`NN` = 01, 02, …, ordinal) | `BC-A-260722-171532_02_HIGH_COGNITIVE_DEMAND.csv` |
 
 ### 11.2 JSON structure (schema version 2.2.0)
 
@@ -541,7 +571,7 @@ The root object (`SessionExport`) carries `version`, `exportedAt` and three nest
 | `participant.participantCode` | string | Anonymised code (e.g. `A-007-260722-063337`) |
 | `participant.age` | int? | Nullable |
 | `participant.gender` | string? | Nullable |
-| `session.sessionCode` | string | `VW-{prefix}-yyMMdd-HHmmss` |
+| `session.sessionCode` | string | `BC-{prefix}-yyMMdd-HHmmss` |
 | `session.startedAt` | string | ISO-8601 UTC |
 | `session.endedAt` | string? | ISO-8601 UTC, nullable |
 | `session.status` | string | `COMPLETED` or `UPLOADED` |
@@ -552,7 +582,7 @@ The root object (`SessionExport`) carries `version`, `exportedAt` and three nest
 
 | Path | Type | Notes |
 |------|------|-------|
-| `scenarioCode` | string | One of `REFERENCE_STATE`, `COGNITIVE_LOAD`, `DISTRACTING_ENVIRONMENT`, `LONG_TERM_FATIGUE`, `REACTION_TASKS` |
+| `scenarioCode` | string | One of `BASELINE_CALIBRATION`, `HIGH_COGNITIVE_DEMAND`, `ENVIRONMENTAL_DISTRACTION`, `SUSTAINED_WORKLOAD`, `SENSORIMOTOR_RESPONSE` |
 | `startedAt` | string | ISO-8601 UTC |
 | `endedAt` | string? | ISO-8601 UTC, nullable |
 | `gaps` | object? | Per-sensor gap report (`heartRate`, `rrInterval`, `respiration`); each = `gapCount`, `gapTotalMs`, `gaps[]{startElapsedMs, endElapsedMs, gapMs}` |
@@ -580,7 +610,7 @@ The root object (`SessionExport`) carries `version`, `exportedAt` and three nest
     "gender": "F"
   },
   "session": {
-    "sessionCode": "VW-A-260722-063346",
+    "sessionCode": "BC-A-260722-063346",
     "startedAt": "2026-07-22T06:33:46Z",
     "endedAt": "2026-07-22T08:18:31Z",
     "status": "UPLOADED",
@@ -596,7 +626,7 @@ The root object (`SessionExport`) carries `version`, `exportedAt` and three nest
   },
   "scenarios": [
     {
-      "scenarioCode": "COGNITIVE_LOAD",
+      "scenarioCode": "HIGH_COGNITIVE_DEMAND",
       "startedAt": "2026-07-22T06:50:38Z",
       "endedAt": "2026-07-22T07:10:38Z",
       "gaps": null,
@@ -633,8 +663,8 @@ one positional line per event (`# respiration_signal_lost_1,<startElapsedMs>,<en
 | `value` | float | Reading |
 
 ```
-# session_code,VW-A-260722-063346
-# scenario_code,COGNITIVE_LOAD
+# session_code,BC-A-260722-063346
+# scenario_code,HIGH_COGNITIVE_DEMAND
 timestamp_ms,elapsed_ms,sensor_type,value
 1782283839046,279,watch_hr,82.0
 1782283839237,470,watch_eda,21.434

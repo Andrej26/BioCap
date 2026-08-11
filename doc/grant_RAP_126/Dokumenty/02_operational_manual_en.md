@@ -1,9 +1,9 @@
-# Operational Manual — VitalWork Sensor Control Module
+# Operational Manual — BioCap Sensor Control Module
 
 **Project:** RAP_126 — Development of a prototype sensor control module for monitoring operator
 physiological state during simulated work scenarios
-**Document version:** 1.0
-**Date:** 2026-07-22
+**Document version:** 1.1
+**Date:** 2026-08-11
 **Intended for:** The measurement operator (device operator during a test session)
 
 ---
@@ -26,11 +26,11 @@ physiological state during simulated work scenarios
 
 *See diagram 01 — System architecture:* `diagrams/png/01_system_architecture_en.png`
 
-The VitalWork system consists of the following devices the operator prepares and controls:
+The BioCap system consists of the following devices the operator prepares and controls:
 
 | Device | Role during measurement |
 |--------|-------------------------|
-| **Android tablet/phone** (Client) | Runs the VitalWork app; connects the sensors; records and uploads the session |
+| **Android tablet/phone** (Client) | Runs the BioCap app; connects the sensors; records and uploads the session |
 | **eSense Pulse** (chest strap) | Measures heart rate and R-R intervals over BLE |
 | **eSense Respiration** (chest strap) | Measures respiration amplitude over the tablet's audio jack |
 | **Galaxy Watch 8** | Measures EDA, heart rate and IBI; worn by the participant |
@@ -48,7 +48,8 @@ The VitalWork system consists of the following devices the operator prepares and
 ### 2.1 Checklist before every session
 
 - [ ] Tablet/phone charged (recommended ≥ 80 %)
-- [ ] Galaxy Watch charged (recommended ≥ 50 %; the app shows a low-battery warning)
+- [ ] Galaxy Watch charged (recommended ≥ 50 %; the app warns at ≤ 20 % and warns critically at
+      ≤ 10 %, where the watch may enter power saving and stop sampling with the screen off)
 - [ ] eSense Pulse charged and working (indicator lit)
 - [ ] eSense Respiration plugged into the tablet's audio jack
 - [ ] **Bluetooth on the tablet is on** (required for both the eSense Pulse BLE link and the Galaxy
@@ -79,7 +80,7 @@ straight to Home. It can be changed any time in **Settings**.
 ### 3.2 Home screen (Client mode)
 
 *Screenshot: Home screen, Client mode*
-![Home — Client](screenshots/VW_01_home_client.jpg){width=2.3in}
+![Home — Client](screenshots/BC_01_home_client.jpg){width=2.3in}
 
 | Element | Purpose |
 |---------|---------|
@@ -97,7 +98,7 @@ straight to Home. It can be changed any time in **Settings**.
 ### 3.3 Home screen (Server mode)
 
 *Screenshot: Home screen, Server mode*
-![Home — Server](screenshots/VW_09_home_server.jpg){width=2.3in}
+![Home — Server](screenshots/BC_09_home_server.jpg){width=2.3in}
 
 A device in Server mode shows only **Connect as Server** and **Settings** — hosting the link and
 watching the paired device's screen is its only job; it does not run sessions or sensors itself.
@@ -105,11 +106,11 @@ watching the paired device's screen is its only job; it does not run sessions or
 ### 3.4 One-time setup — device prefix and mode
 
 *Screenshot: Settings — device prefix and device mode*
-![Settings](screenshots/VW_02_settings.jpg){width=2.3in}
+![Settings](screenshots/BC_02_settings.jpg){width=2.3in}
 
 Before the first session, open **Settings** and pick this device's prefix: **A**, **B**, **C** or
 **D**. The prefix is added to every participant code (e.g. `A-001`) and session code
-(`VW-A-yyMMdd-HHmmss`) generated on this device, and it also scopes the device-to-device link to one
+(`BC-A-yyMMdd-HHmmss`) generated on this device, and it also scopes the device-to-device link to one
 pair.
 
 > **Rule:** both devices of a pair (Client + its Server) use the **same** letter; a different pair
@@ -159,7 +160,7 @@ The app watches the signal quality continuously and shows a warning banner when 
 > companion app is running.
 
 *Screenshot: Sensor-setup screen — Mindfield eSense (connecting) and Galaxy Watch 8 (disconnected)*
-![Sensor setup](screenshots/VW_04_sensor_setup.jpg){width=2.3in}
+![Sensor setup](screenshots/BC_04_sensor_setup.jpg){width=2.3in}
 
 ---
 
@@ -182,7 +183,7 @@ The app watches the signal quality continuously and shows a warning banner when 
 3. Tap **Start session**.
 
 *Screenshot: New Participant form*
-![New participant](screenshots/VW_03_new_participant.jpg){width=2.3in}
+![New participant](screenshots/BC_03_new_participant.jpg){width=2.3in}
 
 4. The app opens the **sensor-setup screen** — a one-time check to confirm sensors before recording
    starts (see §4 and the screenshot above). Tap **Proceed to scenarios** once the sensors you need are
@@ -207,12 +208,12 @@ The app watches the signal quality continuously and shows a warning banner when 
    *Waiting for monitored device*.
 
    *Screenshot: Link — Server, before connecting*
-   ![Link — Server](screenshots/VW_10_link_server.jpg){width=2.3in}
+   ![Link — Server](screenshots/BC_10_link_server.jpg){width=2.3in}
 
 2. On the **Client** device, tap **Connect as Client**. It scans for the Server over mDNS.
 
    *Screenshot: Link — Client, scanning*
-   ![Link — Client](screenshots/VW_08_link_client.jpg){width=2.3in}
+   ![Link — Client](screenshots/BC_08_link_client.jpg){width=2.3in}
 
 3. On the Client, tap the discovered device in **Discovered peers**, then tap **Connect**. Both
    screens turn to a green **Connected** status once the WebSocket link is up.
@@ -236,15 +237,18 @@ After the sensor-setup screen, the **scenario hub** is shown — one card per sc
 **End Session & Save** at the bottom.
 
 *Screenshot: Scenario hub*
-![Scenario hub](screenshots/VW_05_scenario_hub.jpg){width=2.3in}
+![Scenario hub](screenshots/BC_05_scenario_hub.jpg){width=2.3in}
 
 | Scenario | Duration | Purpose |
 |----------|----------|---------|
-| **A — Reference State** | 10 min | Baseline measurement, no induced load |
-| **B — Increased Cognitive Load** | 20 min | Mental workload condition |
-| **C — Distracting Environment** | 20 min | Environmental distraction condition |
-| **D — Long-Term Load and Fatigue** | 30 min | Extended-duration fatigue condition |
-| **E — Reaction Tasks** | 10 min | Reaction-based task condition |
+| **A — Baseline Calibration** | 10 min | Baseline measurement, no induced load |
+| **B — High Cognitive Demand** | 20 min | Mental workload condition |
+| **C — Environmental Distraction** | 20 min | Environmental distraction condition |
+| **D — Sustained Workload** | 30 min | Extended-duration load and fatigue condition |
+| **E — Sensorimotor Response** | 10 min | Reaction-based task condition |
+
+> The duration is fixed per scenario and drives the countdown; the app stops and finalizes the
+> recording on its own when it reaches zero.
 
 ### 7.2 Running one scenario
 
@@ -279,7 +283,7 @@ After the sensor-setup screen, the **scenario hub** is shown — one card per sc
    automatically to the session review screen.
 
    *Screenshot: End-session confirmation*
-   ![Watch data saved](screenshots/VW_06_watch_data_saved.jpg){width=2.3in}
+   ![Watch data saved](screenshots/BC_06_watch_data_saved.jpg){width=2.3in}
 
    > If the watch does not respond, **End without watch data** is available — the watch keeps its
    > stored data safely and it can be recovered on a later session; no data is lost, only delayed.
@@ -289,11 +293,11 @@ After the sensor-setup screen, the **scenario hub** is shown — one card per sc
 The app opens the **session review** screen automatically.
 
 *Screenshot: Session review*
-![Session review](screenshots/VW_07_session_review.jpg){width=2.3in}
+![Session review](screenshots/BC_07_session_review.jpg){width=2.3in}
 
 | Action | Effect |
 |--------|--------|
-| **Upload to server** | Sends the full session (participant + scenarios + samples) to the VitalWork server. Safe to repeat — repeating it does not duplicate data (the server recognizes the session by its code). |
+| **Upload to server** | Sends the full session (participant + scenarios + samples) to the BioCap server. Safe to repeat — repeating it does not duplicate data (the server recognizes the session by its code). |
 | **Export to Documents** | Writes a local JSON + CSV copy to the tablet's Documents folder. Independent of upload status. |
 | **Delete Session** | Permanently removes the session — only after it has been exported or uploaded. |
 
@@ -314,7 +318,7 @@ The app opens the **session review** screen automatically.
 | Device link — Client can't find the Server | Devices not on the same Wi-Fi network, or Server not started | Confirm both are on the same Wi-Fi; tap Connect on the Server first |
 | Screen mirroring shows nothing | Screen-capture consent was denied on the Client | On the Server, tap View screen again; on the Client, accept the system consent dialog |
 | Upload to server failed | No Wi-Fi / weak connection | Retry once connectivity is restored; the upload is safe to repeat |
-| Tablet disconnects sensors after a while | Battery optimization killing the background service | In system Settings, exempt VitalWork from battery optimization |
+| Tablet disconnects sensors after a while | Battery optimization killing the background service | In system Settings, exempt BioCap from battery optimization |
 
 ---
 

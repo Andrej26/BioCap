@@ -1,9 +1,9 @@
-# Technická dokumentácia — senzorický riadiaci modul VitalWork
+# Technická dokumentácia — senzorický riadiaci modul BioCap
 
 **Projekt:** RAP_126 — Vývoj prototypu senzorického riadiaceho modulu pre monitorovanie
 fyziologického stavu operátora počas simulovaných pracovných scenárov
-**Verzia dokumentu:** 1.0
-**Dátum:** 2026-07-22
+**Verzia dokumentu:** 1.1
+**Dátum:** 2026-08-11
 **Jazyk:** Slovenčina (formálny výstup); technická dokumentácia zdrojového kódu je v angličtine.
 
 ---
@@ -28,7 +28,7 @@ fyziologického stavu operátora počas simulovaných pracovných scenárov
 
 Tento dokument je formálnym technickým výstupom grantovej aktivity **Activity 2** (modelovanie /
 simulácia) projektu RAP_126. Popisuje architektúru, komponenty, komunikačné protokoly a dátový model
-systému **VitalWork** — senzorického riadiaceho modulu na monitorovanie fyziologického stavu operátora
+systému **BioCap** — senzorického riadiaceho modulu na monitorovanie fyziologického stavu operátora
 počas piatich simulovaných biofeedback pracovných scenárov.
 
 Systém je prototypom určeným na **technické overenie merania fyziologických parametrov** v
@@ -44,24 +44,29 @@ samotnom meraní sa nijako nepodieľa.
 
 *Pozri diagram 01 — Architektúra systému:* `diagrams/png/01_system_architecture_en.png`
 
-Systém VitalWork tvoria štyri fyzické komponenty prepojené cez lokálnu Wi-Fi sieť a Bluetooth:
+Systém BioCap tvoria štyri fyzické komponenty prepojené cez lokálnu Wi-Fi sieť a Bluetooth, plus
+voliteľné piate zariadenie na vzdialené pozorovanie:
 
 | Komponent | Úloha |
 |-----------|-------|
 | **Monitorované zariadenie** (Android tablet/telefón, rola klienta) | Centrálny uzol: zber dát zo senzorov, správa sedenia, lokálny export a nahranie na server |
 | **eSense Pulse** (Mindfield Biosignals) | Snímač srdcovej frekvencie a R-R intervalov cez BLE |
-| **eSense Respiration** (Mindfield Biosignals) | Snímač dýchacej frekvencie cez audio konektor monitorovaného zariadenia |
+| **eSense Respiration** (Mindfield Biosignals) | Snímač amplitúdy dýchania cez audio konektor monitorovaného zariadenia |
 | **Galaxy Watch 8** (Samsung) | Snímač EDA, srdcovej frekvencie a IBI; posiela dáta cez Wearable Data Layer na monitorované zariadenie |
-| **Zobrazovacie zariadenie** (Android tablet/telefón, rola servera) | Druhé zariadenie operátora; sleduje živú obrazovku monitorovaného zariadenia cez priame Wi-Fi spojenie |
+| **Zobrazovacie zariadenie** (Android tablet/telefón, rola servera) — *voliteľné* | Druhé zariadenie operátora; sleduje živú obrazovku monitorovaného zariadenia cez priame Wi-Fi spojenie. Nie je súčasťou meracieho reťazca |
 
-Centrálny server VitalWork (mimo zariadenia) prijíma nahraté sedenia cez HTTP.
+Centrálny server BioCap (mimo zariadenia) prijíma nahraté sedenia cez HTTP. Od 08/2026 ide o vlastný
+server BioCap; aplikácia už nezdieľa backend so žiadnym iným systémom.
 
 ### 2.2 Cieľ merania
 
 Systém zaznamenáva **fyziologický stav operátora** počas práce na piatich biofeedback scenároch (A–E):
-Referenčný stav, Kognitívna záťaž, Rušivé prostredie, Dlhodobá únava a Reakčné úlohy. Všetky časové
-pečiatky pochádzajú z jedných NTP-korigovaných hodín na monitorovanom zariadení (`TimeProvider`), takže
-vzorky zo všetkých senzorov zdieľajú spoločnú UTC časovú os bez ďalšej synchronizácie hodín medzi
+Baseline Calibration, High Cognitive Demand, Environmental Distraction, Sustained Workload a
+Sensorimotor Response. Každý scenár má predpísané trvanie — 10 min pre A a E, 20 min pre B a C,
+30 min pre D — podľa ktorého beží odpočet na nahrávacej obrazovke; po jeho uplynutí sa scenár
+automaticky ukončí a aplikácia sa vráti do ponuky scenárov. Všetky časové pečiatky pochádzajú
+z jedných NTP-korigovaných hodín na monitorovanom zariadení (`TimeProvider`), takže vzorky zo
+všetkých senzorov zdieľajú spoločnú UTC časovú os bez ďalšej synchronizácie hodín medzi
 zariadeniami.
 
 Paralelne sú zaznamenávané fyziologické signály:
@@ -169,8 +174,8 @@ Projekt pozostáva z dvoch Gradle modulov:
 
 ```
 MainActivity
-└── VitalWorkApplication  (Hilt app trieda)
-    └── VitalWorkTheme    (Material 3 téma, natrvalo svetlá)
+└── BioCapApplication  (Hilt app trieda)
+    └── BioCapTheme    (Material 3 téma, natrvalo svetlá)
         └── AppNavigation (NavHost — Compose navigácia)
             └── Composable obrazovky
 ```
@@ -209,9 +214,9 @@ zastaví sa, keď zaniknú všetky dôvody.
 | `participants/new` | ParticipantEntryScreen | Zadanie anonymizovaného účastníka (vytvára účastníka + sedenie) |
 | `sessions` | SessionsScreen | Zoznam ukončených sedení |
 | `sessions/setup/{sessionId}` | SessionControlScreen (setup mód) | Jednorazová kontrola pripojenia senzorov po zadaní účastníka |
-| `sessions/scenario-select/{sessionId}` | ScenarioSelectionScreen | Rozcestník scenárov: výber A–E alebo ukončenie sedenia |
-| `sessions/active/{sessionId}` | SessionControlScreen | Nahrávanie zvoleného scenára (auto-štart + odpočet) |
-| `sessions/review/{sessionId}` | SessionDetailScreen | Prehľad sedenia, lokálny export, nahranie |
+| `sessions/scenario-select/{sessionId}` | ScenarioSelectionScreen | Ponuka scenárov: výber A–E alebo ukončenie sedenia |
+| `sessions/active/{sessionId}?scenario={n}` | SessionControlScreen | Nahrávanie zvoleného scenára (auto-štart + odpočet) |
+| `sessions/review/{sessionId}?showCsvSaved={bool}` | SessionDetailScreen | Prehľad sedenia, lokálny export, nahranie |
 
 ---
 
@@ -301,9 +306,15 @@ zaznamenaná počas scenára — zdieľajú tie isté hodiny, takže zarovnanie 
 
 *Pozri diagram 03 — Dátový model (ER schéma):* `diagrams/png/03_data_model_en.png`
 
-Room databáza (schéma v6) so 4 entitami; kaskádové mazanie na všetkých cudzích kľúčoch. Schéma
-používa `fallbackToDestructiveMigration`, takže zvýšenie verzie vymaže staré lokálne riadky bez
-ručne písanej migrácie — prijateľné, keďže sedenia sú v čase zmeny schémy už exportované/nahraté.
+Room databáza (schéma v7) so 4 entitami; kaskádové mazanie na všetkých cudzích kľúčoch. Schéma
+používa `fallbackToDestructiveMigration` ako záchytný mechanizmus, takže štrukturálne zvýšenie verzie
+vymaže staré lokálne riadky bez ručne písanej migrácie — prijateľné, keďže sedenia sú v čase zmeny
+schémy už exportované/nahraté.
+
+**Výnimkou je v7:** obsahuje skutočnú `Migration` (`data/db/Migrations.kt`, `MIGRATION_6_7`).
+Prechod na v7 iba premenoval ukladané hodnoty `ScenarioCode`, takže dotknuté riadky sú zaznamenané
+sedenia so stále platnými dátami; deštruktívna cesta by kvôli zmene názvu zahodila reálne merania.
+Migrácia namiesto toho prepíše `scenarios.scenarioCode` priamo na mieste.
 
 | Entita | Tabuľka | Účel |
 |--------|---------|------|
@@ -317,18 +328,24 @@ ručne písanej migrácie — prijateľné, keďže sedenia sú v čase zmeny sc
 | Enum | Hodnoty |
 |------|---------|
 | `SessionStatus` | `ACTIVE`, `COMPLETED`, `UPLOADED` |
-| `ScenarioCode` | `REFERENCE_STATE` (A), `COGNITIVE_LOAD` (B), `DISTRACTING_ENVIRONMENT` (C), `LONG_TERM_FATIGUE` (D), `REACTION_TASKS` (E) |
+| `ScenarioCode` | `BASELINE_CALIBRATION` (A), `HIGH_COGNITIVE_DEMAND` (B), `ENVIRONMENTAL_DISTRACTION` (C), `SUSTAINED_WORKLOAD` (D), `SENSORIMOTOR_RESPONSE` (E) |
 | `SensorType` | `ESENSE_HEART_RATE`, `ESENSE_RR_INTERVAL`, `RESPIRATION`, `WATCH_HR`, `WATCH_IBI`, `WATCH_EDA` |
 
-`ScenarioCode` nesie ako vlastnosti enumu krátky oficiálny kód (A–E) a zobrazovaný názov — v databáze
-a na serveri sa ukladá samotný *názov* konštanty (napr. `REFERENCE_STATE`), takže popisné názvy sa
-môžu meniť bez porušenia existujúcich záznamov.
+`ScenarioCode` nesie tri vlastnosti enumu: krátky oficiálny kód (A–E), zobrazovaný názov (napr.
+*Scenario A – Baseline Calibration*) a `countdownMinutes` — predpísané trvanie scenára (A/E 10 min,
+B/C 20 min, D 30 min).
+
+V databáze a na serveri sa ukladá samotný *názov* konštanty (napr. `BASELINE_CALIBRATION`), takže
+zmena zobrazovaného názvu alebo trvania je bezplatná. Premenovanie *konštanty* je však zmena
+prenosového formátu a vyžaduje zvýšenie verzie schémy s migráciou — presne to bola v7. Oficiálne
+písmeno (A–E) je jediný identifikátor, ktorý prežil všetky premenovania, takže je najbezpečnejším
+kľúčom pri porovnávaní scenárov naprieč verziami.
 
 ### 6.2 Kódovanie identifikátorov
 
 Každé zariadenie má pridelený prefix (A/B/C/D) konfigurovaný v nastaveniach (`SettingsRepository`,
 SharedPreferences, predvolene `A`). Prefix označuje kódy účastníkov (`A-001-260722-143022`) aj
-sedení (`VW-A-yyMMdd-HHmmss`), takže viac zariadení testujúcich paralelne nikdy nevytvorí kolidujúce
+sedení (`BC-A-yyMMdd-HHmmss`), takže viac zariadení testujúcich paralelne nikdy nevytvorí kolidujúce
 kódy. Operátori sa musia vopred dohodnúť, ktoré písmeno patrí ktorému zariadeniu; počítadlo je vedené
 samostatne pre každý prefix (`ParticipantDao.getParticipantCountByPrefix`), takže kolíziám sa
 predchádza iba medzi zariadeniami s odlišnými literami.
@@ -346,9 +363,16 @@ vzoriek zaznamenaných v databáze.
 Schéma sa vyvíjala počas biofeedback pivotu: v2 pridala `WATCH_IBI`; v3 rozdelila typy senzorov podľa
 zariadenia; v4 pridala počítadlá vzoriek z hodiniek; v5 odstránila polia pre reakčný čas/VR
 (`scenarioCategory`, `eventTimestampMs`, `reactionTimestampMs`) a `sessions.notes`; v6 premenovala
-deväť priemyselných kódov scenárov na päť biofeedback scenárov popísaných v §6.1. Bývalá VR fáza —
-spojenie s Meta Quest, HTTP server na zariadení a UDP discovery beacon — bola v tomto pivote úplne
-odstránená a nie je súčasťou aktuálneho systému.
+deväť priemyselných kódov scenárov na päť biofeedback scenárov; **v7** premenovala týchto päť na
+finálnu terminológiu štúdie popísanú v §6.1 a je zatiaľ jediným zvýšením verzie s ručne písanou
+migráciou namiesto deštruktívneho záchytu. Bývalá VR fáza — spojenie s Meta Quest, HTTP server na
+zariadení a UDP discovery beacon — bola v tomto pivote úplne odstránená a nie je súčasťou aktuálneho
+systému.
+
+> **Poznámka pre serverovú stranu:** premenovanie vo v7 sa týka hodnôt odosielaných pri nahrávaní.
+> Server so sedeniami zaznamenanými pred touto verziou bude obsahovať oba zápisy (napr.
+> `COGNITIVE_LOAD` aj `HIGH_COGNITIVE_DEMAND`) a treba ich tam zosúladiť; oficiálne písmeno (A–E)
+> identifikuje scenár jednoznačne v oboch prípadoch.
 
 ---
 
@@ -368,7 +392,7 @@ Vzorky sa dávkujú (50 vzoriek alebo 1 s flush interval, podľa toho, čo nasta
 Room DB. Dáta z hodiniek túto vyrovnávaciu pamäť preskakujú — prídu v jednej dávke na konci sedenia
 (§7.2).
 
-Operátor sa vráti do rozcestníka scenárov → ScenarioRecordingRepositoryImpl.stopRecording()
+Operátor sa vráti do ponuky scenárov → ScenarioRecordingRepositoryImpl.stopRecording()
     → zapíše endedAt do ScenarioEntity
     → ukončí zber vzoriek pre tento scenár
 ```
@@ -394,7 +418,7 @@ Operátor ukončí sedenie
 
 ```
 Koniec sedenia (automaticky)
-    → SessionHttpUploader (Ktor klient) → POST /api/sessions/upload na server VitalWork
+    → SessionHttpUploader (Ktor klient) → POST /api/sessions/upload na server BioCap
         (jeden idempotentný POST, identifikovaný kódom sedenia sessionCode; bezpečný na opakovanie)
     → Pri úspechu: SessionEntity.status = UPLOADED
 
@@ -425,7 +449,7 @@ zopakovať z obrazovky prehľadu sedenia.
 
 | Oprávnenie | Účel |
 |------------|------|
-| `INTERNET`, `ACCESS_NETWORK_STATE` | Nahranie na server VitalWork, konektivita peer linku |
+| `INTERNET`, `ACCESS_NETWORK_STATE` | Nahranie na server BioCap, konektivita peer linku |
 | `CHANGE_WIFI_MULTICAST_STATE` | mDNS vyhľadávanie druhého zariadenia |
 | `RECORD_AUDIO`, `MODIFY_AUDIO_SETTINGS` | eSense Respiration (audio konektor) |
 | `BLUETOOTH_SCAN`, `BLUETOOTH_CONNECT`, `BLUETOOTH_ADVERTISE` | BLE pre eSense Pulse (Android 12+) |
@@ -456,10 +480,10 @@ generovaný kód (`A-001-…`) bez mena, dátumu narodenia ani iných osobných 
 | Room | 2.7.1 | Google Maven |
 | Ktor (CIO klient) | 3.3.0 | Maven Central |
 | Kronos (Lyft NTP) | 0.0.1-alpha11 | Maven Central |
-| Java-WebSocket | aktuálna | Maven Central |
-| stream-webrtc-android | aktuálna | Maven Central |
-| Play Services Wearable | aktuálna | Google Maven |
-| Samsung Health Sensor SDK | aktuálna | Lokálny AAR (`wear/libs/`) |
+| Java-WebSocket | 1.6.0 | Maven Central |
+| stream-webrtc-android | 1.3.10 | Maven Central |
+| Play Services Wearable | 19.0.0 | Google Maven |
+| Samsung Health Sensor SDK | 1.4.1 | Lokálny AAR (`wear/libs/samsung-health-sensor-api-1.4.1.aar`) |
 | eSense SDK | 2.x | Lokálny JAR (`app/libs/eSense_sdk_2_lib.jar`) |
 
 Všetky verzie sú centrálne spravované v `gradle/libs.versions.toml`.
@@ -506,8 +530,16 @@ KEY_ALIAS=...
 KEY_PASSWORD=...
 ```
 
-Základná URL adresa servera VitalWork, ktorú používa `SessionHttpUploader`, je taktiež
-konfigurovaná v `local.properties`.
+Server BioCap, ktorý používa `SessionHttpUploader`, sa konfiguruje v tom istom súbore pomocou dvoch
+kľúčov načítaných do `BuildConfig` pri zostavení:
+
+```properties
+BIOCAP_BASE_URL=...
+BIOCAP_API_KEY=...
+```
+
+Ak niektorý z nich chýba, zostavenie prebehne, ale nahranie zlyhá s hláškou *„Server upload is not
+configured"* — sedenie zostane v stave `COMPLETED` a dá sa nahrať neskôr, takže o dáta sa nepríde.
 
 ### 10.4 Inštalácia companion app (Galaxy Watch)
 
@@ -520,7 +552,7 @@ popísaný v [`doc/install_watch_app.md`](../install_watch_app.md).
 
 *Pozri diagram 06 — Schéma exportu:* `diagrams/png/06_export_schema_en.png`
 
-Na konci sedenia sa sedenie automaticky nahrá na server VitalWork jedným idempotentným JSON POST-om
+Na konci sedenia sa sedenie automaticky nahrá na server BioCap jedným idempotentným JSON POST-om
 (`/api/sessions/upload`, identifikovaným kódom sedenia `sessionCode`). Uloženie JSON/CSV súborov
 lokálne na zariadení je samostatný, voliteľný krok, ktorý môže operátor spustiť — exportovaný JSON je
 autoritatívny, plne vnorený balík; CSV súbory (jeden na scenár) sú plochý pohľad na tie isté vzorky,
@@ -530,8 +562,8 @@ vhodný pre tabuľkové procesory.
 
 | Súbor | Rozsah | Príklad názvu |
 |-------|--------|---------------|
-| `{sessionCode}_export.json` | Jeden súbor na **sedenie** (účastník + sedenie + všetky scenáre + všetky vzorky) | `VW-A-260722-171532_export.json` |
-| `{sessionCode}_NN_{SCENARIO}.csv` | Jeden súbor na **scenár** (`NN` = 01, 02, …, poradie) | `VW-A-260722-171532_02_COGNITIVE_LOAD.csv` |
+| `{sessionCode}_export.json` | Jeden súbor na **sedenie** (účastník + sedenie + všetky scenáre + všetky vzorky) | `BC-A-260722-171532_export.json` |
+| `{sessionCode}_NN_{SCENARIO}.csv` | Jeden súbor na **scenár** (`NN` = 01, 02, …, poradie) | `BC-A-260722-171532_02_HIGH_COGNITIVE_DEMAND.csv` |
 
 ### 11.2 Štruktúra JSON (verzia schémy 2.2.0)
 
@@ -545,7 +577,7 @@ Koreňový objekt (`SessionExport`) nesie `version`, `exportedAt` a tri vnorené
 | `participant.participantCode` | string | Anonymizovaný kód (napr. `A-007-260722-063337`) |
 | `participant.age` | int? | Nullable |
 | `participant.gender` | string? | Nullable |
-| `session.sessionCode` | string | `VW-{prefix}-yyMMdd-HHmmss` |
+| `session.sessionCode` | string | `BC-{prefix}-yyMMdd-HHmmss` |
 | `session.startedAt` | string | ISO-8601 UTC |
 | `session.endedAt` | string? | ISO-8601 UTC, nullable |
 | `session.status` | string | `COMPLETED` alebo `UPLOADED` |
@@ -556,7 +588,7 @@ Koreňový objekt (`SessionExport`) nesie `version`, `exportedAt` a tri vnorené
 
 | Cesta | Typ | Poznámka |
 |-------|-----|----------|
-| `scenarioCode` | string | Jeden z `REFERENCE_STATE`, `COGNITIVE_LOAD`, `DISTRACTING_ENVIRONMENT`, `LONG_TERM_FATIGUE`, `REACTION_TASKS` |
+| `scenarioCode` | string | Jeden z `BASELINE_CALIBRATION`, `HIGH_COGNITIVE_DEMAND`, `ENVIRONMENTAL_DISTRACTION`, `SUSTAINED_WORKLOAD`, `SENSORIMOTOR_RESPONSE` |
 | `startedAt` | string | ISO-8601 UTC |
 | `endedAt` | string? | ISO-8601 UTC, nullable |
 | `gaps` | object? | Správa o medzerách pre každý senzor (`heartRate`, `rrInterval`, `respiration`); každá = `gapCount`, `gapTotalMs`, `gaps[]{startElapsedMs, endElapsedMs, gapMs}` |
@@ -584,7 +616,7 @@ Koreňový objekt (`SessionExport`) nesie `version`, `exportedAt` a tri vnorené
     "gender": "F"
   },
   "session": {
-    "sessionCode": "VW-A-260722-063346",
+    "sessionCode": "BC-A-260722-063346",
     "startedAt": "2026-07-22T06:33:46Z",
     "endedAt": "2026-07-22T08:18:31Z",
     "status": "UPLOADED",
@@ -600,7 +632,7 @@ Koreňový objekt (`SessionExport`) nesie `version`, `exportedAt` a tri vnorené
   },
   "scenarios": [
     {
-      "scenarioCode": "COGNITIVE_LOAD",
+      "scenarioCode": "HIGH_COGNITIVE_DEMAND",
       "startedAt": "2026-07-22T06:50:38Z",
       "endedAt": "2026-07-22T07:10:38Z",
       "gaps": null,
@@ -638,8 +670,8 @@ dychového signálu, pridajú sa riadky s počtami `respiration_signal_lost` /
 | `value` | float | Nameraná hodnota |
 
 ```
-# session_code,VW-A-260722-063346
-# scenario_code,COGNITIVE_LOAD
+# session_code,BC-A-260722-063346
+# scenario_code,HIGH_COGNITIVE_DEMAND
 timestamp_ms,elapsed_ms,sensor_type,value
 1782283839046,279,watch_hr,82.0
 1782283839237,470,watch_eda,21.434
